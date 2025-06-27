@@ -10,6 +10,7 @@ const BookingManagement = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [showFilters, setShowFilters] = useState(false);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -17,9 +18,16 @@ const BookingManagement = () => {
     const [total, setTotal] = useState(0);
 
     // Filters
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('all');
+    const [filters, setFilters] = useState({
+        status: 'all',
+        payment_status: '',
+        organizer_name: '',
+        date_from: '',
+        date_to: '',
+        sort_by: 'newest',
+        page: 1,
+        limit: 10
+    });
 
     // Modals
     const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -51,7 +59,7 @@ const BookingManagement = () => {
 
     useEffect(() => {
         fetchBookings();
-    }, [currentPage, statusFilter, searchTerm]);
+    }, [filters]);
 
     const fetchBookings = async () => {
         try {
@@ -59,10 +67,14 @@ const BookingManagement = () => {
             setError(null);
 
             const params = new URLSearchParams({
-                page: currentPage.toString(),
-                limit: '10',
-                ...(statusFilter !== 'all' && { status: statusFilter }),
-                ...(searchTerm && { search: searchTerm })
+                page: filters.page.toString(),
+                limit: filters.limit.toString(),
+                ...(filters.status !== 'all' && { status: filters.status }),
+                ...(filters.payment_status && { payment_status: filters.payment_status }),
+                ...(filters.organizer_name && { organizer_name: filters.organizer_name }),
+                ...(filters.date_from && { date_from: filters.date_from }),
+                ...(filters.date_to && { date_to: filters.date_to }),
+                sort_by: filters.sort_by
             });
 
             const token = localStorage.getItem('token');
@@ -186,10 +198,25 @@ const BookingManagement = () => {
         }
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        setCurrentPage(1);
-        fetchBookings();
+    const handleFilterChange = (field, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [field]: value,
+            page: field === 'page' ? value : 1 // Reset page only when changing other filters
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            status: 'all',
+            payment_status: '',
+            organizer_name: '',
+            date_from: '',
+            date_to: '',
+            sort_by: 'newest',
+            page: 1,
+            limit: 10
+        });
     };
 
     const formatCurrency = (amount) => {
@@ -200,8 +227,8 @@ const BookingManagement = () => {
     };
 
     const getFilteredBookings = () => {
-        if (activeTab === 'all') return bookings;
-        return bookings.filter(booking => booking.status === activeTab);
+        if (filters.status === 'all') return bookings;
+        return bookings.filter(booking => booking.status === filters.status);
     };
 
     const openResponseModal = (booking, action) => {
@@ -211,15 +238,37 @@ const BookingManagement = () => {
     };
 
     return (
-        <Container fluid className="py-4">
+        <Container className="py-4 px-4">
             {/* Header */}
             <Row className="mb-4">
                 <Col>
-                    <h1 className="display-6 fw-bold text-primary mb-2">
-                        <i className="fas fa-calendar-check me-3"></i>
-                        My Bookings
-                    </h1>
-                    <p className="lead text-muted">Manage your booking requests and events</p>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 className="display-6 fw-bold text-primary mb-2">
+                                <i className="fas fa-calendar-check me-3"></i>
+                                My Bookings
+                            </h1>
+                            <p className="lead text-muted">Manage your booking requests and events</p>
+                        </div>
+                        <div>
+                            <Button 
+                                variant="outline-secondary" 
+                                className="me-2"
+                                onClick={() => setShowFilters(!showFilters)}
+                            >
+                                <i className="fas fa-filter me-1"></i>
+                                {showFilters ? 'Hide Filters' : 'Show Filters'}
+                            </Button>
+                            <Button 
+                                variant="outline-primary"
+                                onClick={fetchBookings}
+                                disabled={loading}
+                            >
+                                <i className="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </Button>
+                        </div>
+                    </div>
                 </Col>
             </Row>
 
@@ -237,7 +286,7 @@ const BookingManagement = () => {
             )}
 
             {/* Quick Stats */}
-            <Row className="mb-4">
+            <Row className="mb-4 mx-0">
                 <Col md={2}>
                     <Card className="text-center h-100">
                         <Card.Body>
@@ -288,69 +337,143 @@ const BookingManagement = () => {
                 </Col>
             </Row>
 
-            {/* Filters and Search */}
-            <Card className="mb-4">
-                <Card.Body>
-                    <Row>
-                        <Col md={6}>
-                            <Form onSubmit={handleSearch}>
-                                <InputGroup>
-                                    <Form.Control
-                                        type="text"
-                                        placeholder="Search by event name or organizer..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                    <Button type="submit" variant="outline-primary">
-                                        <i className="fas fa-search"></i>
-                                    </Button>
-                                </InputGroup>
-                            </Form>
-                        </Col>
-                        <Col md={3}>
-                            <Form.Select 
-                                value={statusFilter} 
-                                onChange={(e) => setStatusFilter(e.target.value)}
+            {/* Filter Section */}
+            {showFilters && (
+                <Card className="mb-4 mx-0">
+                    <Card.Header className="bg-light">
+                        <div className="d-flex justify-content-between align-items-center">
+                            <h5 className="mb-0">
+                                <i className="fas fa-sliders-h me-2"></i>
+                                Filter Bookings
+                            </h5>
+                            <Button 
+                                variant="link" 
+                                className="text-muted p-0" 
+                                onClick={clearFilters}
                             >
-                                <option value="all">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </Form.Select>
-                        </Col>
-                        <Col md={3}>
-                            <div className="d-flex gap-2">
-                                <Button 
-                                    variant="outline-primary" 
-                                    size="sm"
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setStatusFilter('all');
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <i className="fas fa-undo me-1"></i>
-                                    Reset
-                                </Button>
-                                <Button 
-                                    variant="primary" 
-                                    size="sm"
-                                    onClick={fetchBookings}
-                                    disabled={loading}
-                                >
-                                    <i className="fas fa-sync-alt me-1"></i>
-                                    Refresh
-                                </Button>
-                            </div>
-                        </Col>
-                    </Row>
-                </Card.Body>
-            </Card>
+                                <i className="fas fa-times me-1"></i>
+                                Clear All
+                            </Button>
+                        </div>
+                    </Card.Header>
+                    <Card.Body>
+                        <Row className="g-3">
+                            {/* Status Filter */}
+                            <Col md={3}>
+                                <Form.Group>
+                                    <Form.Label>Booking Status</Form.Label>
+                                    <Form.Select
+                                        value={filters.status}
+                                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                                    >
+                                        <option value="all">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="disputed">Disputed</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+
+                            {/* Payment Status Filter */}
+                            <Col md={3}>
+                                <Form.Group>
+                                    <Form.Label>Payment Status</Form.Label>
+                                    <Form.Select
+                                        value={filters.payment_status}
+                                        onChange={(e) => handleFilterChange('payment_status', e.target.value)}
+                                    >
+                                        <option value="">All Payment Statuses</option>
+                                        <option value="pending">Pending Payment</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="released">Released</option>
+                                        <option value="refunded">Refunded</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+
+                            {/* Organizer Name Search */}
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label>Organizer Name</Form.Label>
+                                    <InputGroup>
+                                        <InputGroup.Text>
+                                            <i className="fas fa-search"></i>
+                                        </InputGroup.Text>
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Search by organizer name..."
+                                            value={filters.organizer_name}
+                                            onChange={(e) => handleFilterChange('organizer_name', e.target.value)}
+                                        />
+                                    </InputGroup>
+                                </Form.Group>
+                            </Col>
+
+                            {/* Date Range */}
+                            <Col md={3}>
+                                <Form.Group>
+                                    <Form.Label>From Date</Form.Label>
+                                    <Form.Control
+                                        type="date"
+                                        value={filters.date_from}
+                                        onChange={(e) => handleFilterChange('date_from', e.target.value)}
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={3}>
+                                <Form.Group>
+                                    <Form.Label>To Date</Form.Label>
+                                    <Form.Control
+                                        type="date"
+                                        value={filters.date_to}
+                                        onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            {/* Sort By */}
+                            <Col md={3}>
+                                <Form.Group>
+                                    <Form.Label>Sort By</Form.Label>
+                                    <Form.Select
+                                        value={filters.sort_by}
+                                        onChange={(e) => handleFilterChange('sort_by', e.target.value)}
+                                    >
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="event_date">Event Date</option>
+                                        <option value="amount_high">Amount (High to Low)</option>
+                                        <option value="amount_low">Amount (Low to High)</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+
+                            {/* Results Per Page */}
+                            <Col md={3}>
+                                <Form.Group>
+                                    <Form.Label>Results Per Page</Form.Label>
+                                    <Form.Select
+                                        value={filters.limit}
+                                        onChange={(e) => handleFilterChange('limit', parseInt(e.target.value))}
+                                    >
+                                        <option value="5">5 per page</option>
+                                        <option value="10">10 per page</option>
+                                        <option value="25">25 per page</option>
+                                        <option value="50">50 per page</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                    </Card.Body>
+                </Card>
+            )}
 
             {/* Bookings Table */}
-            <Card>
+            <Card className="mx-0">
                 <Card.Header>
                     <h5 className="mb-0">
                         <i className="fas fa-list me-2"></i>
@@ -371,8 +494,8 @@ const BookingManagement = () => {
                             <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                             <h5 className="text-muted">No bookings found</h5>
                             <p className="text-muted">
-                                {statusFilter !== 'all' || searchTerm 
-                                    ? 'Try adjusting your filters or search terms'
+                                {filters.status !== 'all' || filters.organizer_name || filters.date_from || filters.date_to
+                                    ? 'Try adjusting your filters'
                                     : 'You haven\'t received any booking requests yet'
                                 }
                             </p>
@@ -508,25 +631,25 @@ const BookingManagement = () => {
                     <Card.Footer>
                         <div className="d-flex justify-content-between align-items-center">
                             <small className="text-muted">
-                                Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, total)} of {total} bookings
+                                Showing {((currentPage - 1) * filters.limit) + 1} to {Math.min(currentPage * filters.limit, total)} of {total} bookings
                             </small>
                             <Pagination className="mb-0">
                                 <Pagination.Prev 
                                     disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(currentPage - 1)}
+                                    onClick={() => handleFilterChange('page', currentPage - 1)}
                                 />
                                 {[...Array(totalPages)].map((_, index) => (
                                     <Pagination.Item
                                         key={index + 1}
                                         active={index + 1 === currentPage}
-                                        onClick={() => setCurrentPage(index + 1)}
+                                        onClick={() => handleFilterChange('page', index + 1)}
                                     >
                                         {index + 1}
                                     </Pagination.Item>
                                 ))}
                                 <Pagination.Next 
                                     disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(currentPage + 1)}
+                                    onClick={() => handleFilterChange('page', currentPage + 1)}
                                 />
                             </Pagination>
                         </div>

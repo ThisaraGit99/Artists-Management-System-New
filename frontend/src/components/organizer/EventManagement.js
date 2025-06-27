@@ -29,11 +29,22 @@ const EventManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
   
-  // Additional filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEventType, setSelectedEventType] = useState('all');
-  const [dateRangeFilter, setDateRangeFilter] = useState('all');
+  // Filter state
+  const [filters, setFilters] = useState({
+    searchTerm: '',
+    eventType: 'all',
+    dateRange: 'all',
+    status: 'all',
+    venue: '',
+    budgetMin: '',
+    budgetMax: '',
+    dateFrom: '',
+    dateTo: '',
+    hasApplications: 'all',
+    sortBy: 'newest'
+  });
   
   // Dialog states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -47,13 +58,35 @@ const EventManagement = () => {
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
   const [applicationFilter, setApplicationFilter] = useState('all');
-
-  // Add processing state for this specific application
   const [processingAppId, setProcessingAppId] = useState(null);
 
   useEffect(() => {
     loadEvents();
   }, []);
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      searchTerm: '',
+      eventType: 'all',
+      dateRange: 'all',
+      status: 'all',
+      venue: '',
+      budgetMin: '',
+      budgetMax: '',
+      dateFrom: '',
+      dateTo: '',
+      hasApplications: 'all',
+      sortBy: 'newest'
+    });
+    setActiveTab('all');
+  };
 
   const loadEvents = async () => {
     try {
@@ -226,11 +259,21 @@ const EventManagement = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateString) return 'Date not set';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid Date';
+    }
   };
 
   const formatCurrency = (amount, currency = 'USD') => {
@@ -241,68 +284,98 @@ const EventManagement = () => {
   };
 
   const getFilteredEvents = () => {
-    let filtered = events;
+    let filtered = [...events];
 
-    // Filter by tab (status)
-    switch (activeTab) {
-      case 'all': 
-        filtered = events; 
-        break;
-      case 'active': 
-        filtered = events.filter(e => e.status === 'planning' || e.status === 'published'); 
-        break;
-      case 'progress': 
-        filtered = events.filter(e => e.status === 'in_progress'); 
-        break;
-      case 'completed': 
-        filtered = events.filter(e => e.status === 'completed'); 
-        break;
-      default: 
-        filtered = events;
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(event => 
-        event.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.venue_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    // Search filter
+    if (filters.searchTerm) {
+      const search = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(event =>
+        event.title.toLowerCase().includes(search) ||
+        event.description.toLowerCase().includes(search) ||
+        event.venue_name?.toLowerCase().includes(search) ||
+        event.venue_city?.toLowerCase().includes(search)
       );
     }
 
-    // Filter by event type
-    if (selectedEventType !== 'all') {
-      filtered = filtered.filter(event => event.event_type === selectedEventType);
+    // Event type filter
+    if (filters.eventType !== 'all') {
+      filtered = filtered.filter(event => 
+        event.event_type === filters.eventType
+      );
     }
 
-    // Filter by date range
-    if (dateRangeFilter !== 'all') {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      const nextMonth = new Date(today);
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
+    // Status filter
+    if (filters.status !== 'all') {
+      filtered = filtered.filter(event => 
+        event.status === filters.status
+      );
+    }
 
+    // Venue filter
+    if (filters.venue) {
+      const venueSearch = filters.venue.toLowerCase();
+      filtered = filtered.filter(event =>
+        event.venue_name?.toLowerCase().includes(venueSearch) ||
+        event.venue_city?.toLowerCase().includes(venueSearch) ||
+        event.venue_state?.toLowerCase().includes(venueSearch)
+      );
+    }
+
+    // Budget range filter
+    if (filters.budgetMin) {
+      filtered = filtered.filter(event => 
+        event.budget >= parseFloat(filters.budgetMin)
+      );
+    }
+    if (filters.budgetMax) {
+      filtered = filtered.filter(event => 
+        event.budget <= parseFloat(filters.budgetMax)
+      );
+    }
+
+    // Date range filter
+    if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      filtered = filtered.filter(event => 
+        new Date(event.date) >= fromDate
+      );
+    }
+    if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      filtered = filtered.filter(event => 
+        new Date(event.date) <= toDate
+      );
+    }
+
+    // Applications filter
+    if (filters.hasApplications !== 'all') {
       filtered = filtered.filter(event => {
-        const eventDate = new Date(event.event_date);
-        switch (dateRangeFilter) {
-          case 'today':
-            return eventDate >= today && eventDate < tomorrow;
-          case 'thisWeek':
-            return eventDate >= today && eventDate < nextWeek;
-          case 'thisMonth':
-            return eventDate >= today && eventDate < nextMonth;
-          case 'upcoming':
-            return eventDate >= today;
-          case 'past':
-            return eventDate < today;
-          default:
-            return true;
-        }
+        const hasApps = event.application_count > 0;
+        return filters.hasApplications === 'yes' ? hasApps : !hasApps;
       });
+    }
+
+    // Sort events
+    switch (filters.sortBy) {
+      case 'date_asc':
+        filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+        break;
+      case 'date_desc':
+        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        break;
+      case 'budget_high':
+        filtered.sort((a, b) => b.budget - a.budget);
+        break;
+      case 'budget_low':
+        filtered.sort((a, b) => a.budget - b.budget);
+        break;
+      case 'applications':
+        filtered.sort((a, b) => (b.application_count || 0) - (a.application_count || 0));
+        break;
+      case 'newest':
+      default:
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        break;
     }
 
     return filtered;
@@ -312,14 +385,6 @@ const EventManagement = () => {
   const getEventTypes = () => {
     const types = [...new Set(events.map(event => event.event_type))];
     return types.filter(type => type);
-  };
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    setSearchTerm('');
-    setSelectedEventType('all');
-    setDateRangeFilter('all');
-    setActiveTab('all');
   };
 
   const filteredEvents = getFilteredEvents();
@@ -338,222 +403,299 @@ const EventManagement = () => {
   }
 
   return (
-    <Container className="py-4">
+    <Container className="py-4 px-4">
       {/* Header */}
-      <Row className="mb-4">
+      <Row className="mb-4 mx-0">
         <Col>
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              <h1 className="display-6 fw-bold">
-                <i className="fas fa-calendar-alt me-3 text-primary"></i>
+              <h1 className="display-6 fw-bold text-primary mb-2">
+                <i className="fas fa-calendar-alt me-3"></i>
                 Event Management
               </h1>
-              <p className="lead text-muted">
-                Create and manage your events, track bookings and applications
-              </p>
+              <p className="lead text-muted">Create and manage your events</p>
             </div>
-            <Button 
-              variant="primary" 
-              size="lg"
-              onClick={() => setShowCreateModal(true)}
-            >
-              <i className="fas fa-plus me-2"></i>
-              Create Event
-            </Button>
+            <div>
+              <Button 
+                variant="outline-secondary" 
+                className="me-2"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <i className="fas fa-filter me-1"></i>
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </Button>
+              <Button 
+                variant="primary" 
+                onClick={() => setShowCreateModal(true)}
+              >
+                <i className="fas fa-plus me-2"></i>
+                Create Event
+              </Button>
+            </div>
           </div>
         </Col>
       </Row>
 
-      {/* Stats Cards */}
-      <Row className="mb-4">
-        <Col md={3} className="mb-3">
+      {/* Quick Stats */}
+      <Row className="mb-4 mx-0">
+        <Col md={3}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body className="text-center">
-              <i className="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
-              <h3 className="fw-bold text-primary">{events.length}</h3>
-              <p className="text-muted mb-0">Total Events</p>
+              <i className="fas fa-calendar-check fa-2x text-primary mb-2"></i>
+              <h3 className="fw-bold">{filteredEvents.length}</h3>
+              <small className="text-muted">Total Events</small>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3} className="mb-3">
+        <Col md={3}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body className="text-center">
-              <i className="fas fa-calendar-check fa-3x text-warning mb-3"></i>
-              <h3 className="fw-bold text-warning">
-                {events.filter(e => e.status === 'published').length}
+              <i className="fas fa-clock fa-2x text-warning mb-2"></i>
+              <h3 className="fw-bold">
+                {filteredEvents.filter(e => e.status === 'published').length}
               </h3>
-              <p className="text-muted mb-0">Published</p>
+              <small className="text-muted">Published Events</small>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3} className="mb-3">
+        <Col md={3}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body className="text-center">
-              <i className="fas fa-users fa-3x text-info mb-3"></i>
-              <h3 className="fw-bold text-info">
-                {events.reduce((sum, e) => sum + (e.total_bookings || 0), 0)}
+              <i className="fas fa-users fa-2x text-success mb-2"></i>
+              <h3 className="fw-bold">
+                {filteredEvents.reduce((sum, event) => sum + (event.application_count || 0), 0)}
               </h3>
-              <p className="text-muted mb-0">Total Applications</p>
+              <small className="text-muted">Total Applications</small>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3} className="mb-3">
+        <Col md={3}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body className="text-center">
-              <i className="fas fa-handshake fa-3x text-success mb-3"></i>
-              <h3 className="fw-bold text-success">
-                {events.reduce((sum, e) => sum + (e.confirmed_bookings || 0), 0)}
+              <i className="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+              <h3 className="fw-bold">
+                {formatCurrency(filteredEvents.reduce((sum, event) => sum + (event.budget || 0), 0))}
               </h3>
-              <p className="text-muted mb-0">Confirmed</p>
+              <small className="text-muted">Total Budget</small>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {/* Advanced Filters Section */}
-      <Card className="mb-3">
-        <Card.Header className="bg-light">
+      {/* Filter Section */}
+      {showFilters && (
+        <Card className="mb-4 mx-0">
+          <Card.Header className="bg-light">
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">
+                <i className="fas fa-sliders-h me-2"></i>
+                Filter Events
+              </h5>
+              <Button 
+                variant="link" 
+                className="text-muted p-0" 
+                onClick={clearFilters}
+              >
+                <i className="fas fa-times me-1"></i>
+                Clear All
+              </Button>
+            </div>
+          </Card.Header>
+          <Card.Body>
+            <Row className="g-3">
+              {/* Search */}
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>Search Events</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>
+                      <i className="fas fa-search"></i>
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Search by event title, description, or venue..."
+                      value={filters.searchTerm}
+                      onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+
+              {/* Event Type */}
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Event Type</Form.Label>
+                  <Form.Select
+                    value={filters.eventType}
+                    onChange={(e) => handleFilterChange('eventType', e.target.value)}
+                  >
+                    <option value="all">All Event Types</option>
+                    {getEventTypes().map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Status */}
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Status</Form.Label>
+                  <Form.Select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="planning">Planning</option>
+                    <option value="published">Published</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Applications Filter */}
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Applications</Form.Label>
+                  <Form.Select
+                    value={filters.hasApplications}
+                    onChange={(e) => handleFilterChange('hasApplications', e.target.value)}
+                  >
+                    <option value="all">All Events</option>
+                    <option value="yes">Has Applications</option>
+                    <option value="no">No Applications</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Venue Search */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Venue</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Search by venue name, city, or state..."
+                    value={filters.venue}
+                    onChange={(e) => handleFilterChange('venue', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              {/* Sort By */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Sort By</Form.Label>
+                  <Form.Select
+                    value={filters.sortBy}
+                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="date_asc">Event Date (Ascending)</option>
+                    <option value="date_desc">Event Date (Descending)</option>
+                    <option value="budget_high">Budget (High to Low)</option>
+                    <option value="budget_low">Budget (Low to High)</option>
+                    <option value="applications">Most Applications</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Budget Range */}
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Min Budget</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>$</InputGroup.Text>
+                    <Form.Control
+                      type="number"
+                      placeholder="0"
+                      value={filters.budgetMin}
+                      onChange={(e) => handleFilterChange('budgetMin', e.target.value)}
+                      min="0"
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Max Budget</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>$</InputGroup.Text>
+                    <Form.Control
+                      type="number"
+                      placeholder="Any"
+                      value={filters.budgetMax}
+                      onChange={(e) => handleFilterChange('budgetMax', e.target.value)}
+                      min="0"
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+
+              {/* Date Range */}
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>From Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={filters.dateFrom}
+                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>To Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={filters.dateTo}
+                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      )}
+
+      {/* Events List */}
+      <Card className="mx-0">
+        <Card.Header className="bg-white py-3">
           <div className="d-flex justify-content-between align-items-center">
-            <h6 className="mb-0">
-              <i className="fas fa-filter me-2"></i>
-              Filter Events
-            </h6>
-            <Button 
-              variant="outline-secondary" 
-              size="sm"
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedEventType('all');
-                setDateRangeFilter('all');
-              }}
-            >
-              <i className="fas fa-times me-1"></i>
-              Clear Filters
-            </Button>
+            <h5 className="mb-0">
+              <i className="fas fa-list me-2"></i>
+              Your Events
+              {filteredEvents.length > 0 && (
+                <Badge bg="secondary" className="ms-2">
+                  {filteredEvents.length}
+                </Badge>
+              )}
+            </h5>
           </div>
         </Card.Header>
-        <Card.Body>
-          <Row>
-            <Col md={4} className="mb-3">
-              <label className="form-label fw-bold">
-                <i className="fas fa-search me-1"></i>
-                Search Events
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search by title, description, or venue..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </Col>
-            <Col md={4} className="mb-3">
-              <label className="form-label fw-bold">
-                <i className="fas fa-calendar me-1"></i>
-                Event Type
-              </label>
-              <select
-                className="form-select"
-                value={selectedEventType}
-                onChange={(e) => setSelectedEventType(e.target.value)}
-              >
-                <option value="all">All Types</option>
-                {[...new Set(events.map(event => event.event_type))].filter(type => type).map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </Col>
-            <Col md={4} className="mb-3">
-              <label className="form-label fw-bold">
-                <i className="fas fa-clock me-1"></i>
-                Date Range
-              </label>
-              <select
-                className="form-select"
-                value={dateRangeFilter}
-                onChange={(e) => setDateRangeFilter(e.target.value)}
-              >
-                <option value="all">All Dates</option>
-                <option value="today">Today</option>
-                <option value="thisWeek">This Week</option>
-                <option value="thisMonth">This Month</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="past">Past Events</option>
-              </select>
-            </Col>
-          </Row>
-          {(searchTerm || selectedEventType !== 'all' || dateRangeFilter !== 'all') && (
-            <div className="mt-3 pt-3 border-top">
-              <small className="text-muted">
-                <i className="fas fa-info-circle me-1"></i>
-                Showing filtered results. 
-                {searchTerm && ` Search: "${searchTerm}"`}
-                {selectedEventType !== 'all' && ` Type: ${selectedEventType}`}
-                {dateRangeFilter !== 'all' && ` Date: ${dateRangeFilter}`}
-              </small>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* Filter Tabs */}
-      <Card className="mb-4">
-        <Card.Header className="bg-white border-0">
-          <Nav variant="tabs" className="border-0">
-            <Nav.Item>
-              <Nav.Link 
-                active={activeTab === 'all'} 
-                onClick={() => setActiveTab('all')}
-                className="text-decoration-none"
-              >
-                All Events ({events.length})
-              </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link 
-                active={activeTab === 'active'} 
-                onClick={() => setActiveTab('active')}
-                className="text-decoration-none"
-              >
-                Active ({events.filter(e => e.status === 'planning' || e.status === 'published').length})
-              </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link 
-                active={activeTab === 'progress'} 
-                onClick={() => setActiveTab('progress')}
-                className="text-decoration-none"
-              >
-                In Progress ({events.filter(e => e.status === 'in_progress').length})
-              </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link 
-                active={activeTab === 'completed'} 
-                onClick={() => setActiveTab('completed')}
-                className="text-decoration-none"
-              >
-                Completed ({events.filter(e => e.status === 'completed').length})
-              </Nav.Link>
-            </Nav.Item>
-          </Nav>
-        </Card.Header>
-
-        <Card.Body>
-          {/* Events Table */}
-          {filteredEvents.length === 0 ? (
+        <Card.Body className="p-0">
+          {loading ? (
             <div className="text-center py-5">
-              <i className="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
-              <h5 className="text-muted">No events found</h5>
+              <Spinner animation="border" role="status" variant="primary">
+                <span className="visually-hidden">Loading events...</span>
+              </Spinner>
+              <p className="mt-3">Loading your events...</p>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+              <h5>No events found</h5>
               <p className="text-muted">
-                {activeTab === 'all' 
-                  ? "You haven't created any events yet. Create your first event to get started!"
-                  : "No events match the current filter."
-                }
+                {events.length === 0 
+                  ? "Create your first event to get started!" 
+                  : "Try adjusting your filters to see more events"}
               </p>
-              {activeTab === 'all' && (
-                <Button
-                  variant="primary"
+              {events.length === 0 && (
+                <Button 
+                  variant="primary" 
                   onClick={() => setShowCreateModal(true)}
                 >
                   <i className="fas fa-plus me-2"></i>
@@ -563,59 +705,73 @@ const EventManagement = () => {
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover>
+              <Table hover className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Event</th>
-                    <th>Type</th>
+                    <th className="px-4">Event Details</th>
                     <th>Date</th>
-                    <th>Location</th>
+                    <th>Venue</th>
                     <th>Budget</th>
                     <th>Status</th>
-
-                    <th>Actions</th>
+                    <th className="px-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEvents.map((event) => (
+                  {filteredEvents.map(event => (
                     <tr key={event.id}>
                       <td>
-                        <div>
-                          <h6 className="mb-1 fw-bold">{event.title}</h6>
-                          <small className="text-muted">
-                            {event.description?.substring(0, 50)}...
-                          </small>
+                        <div className="d-flex align-items-center">
+                          <div>
+                            <h6 className="mb-1">{event.title}</h6>
+                            <small className="text-muted">
+                              <i className="fas fa-tag me-1"></i>
+                              {event.event_type}
+                            </small>
+                          </div>
                         </div>
                       </td>
                       <td>
-                        <Badge bg="primary" className="text-white">
-                          <i className="fas fa-calendar me-1"></i>
-                          {event.event_type}
-                        </Badge>
-                      </td>
-                      <td>
                         <i className="fas fa-calendar-day me-1 text-muted"></i>
-                        {formatDate(event.event_date)}
+                        {event.event_date ? (
+                          formatDate(event.event_date)
+                        ) : event.start_date ? (
+                          <>
+                            {formatDate(event.start_date)}
+                            {event.end_date && event.end_date !== event.start_date && (
+                              <> - {formatDate(event.end_date)}</>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-muted">Date not set</span>
+                        )}
                       </td>
                       <td>
                         <i className="fas fa-map-marker-alt me-1 text-muted"></i>
-                        {event.venue_city}, {event.venue_state}
+                        {event.venue_name || 'TBD'}
                       </td>
                       <td>
-                        <i className="fas fa-dollar-sign me-1 text-muted"></i>
-                        {event.budget_min && event.budget_max
-                          ? `${formatCurrency(event.budget_min)} - ${formatCurrency(event.budget_max)}`
-                          : event.budget_min 
-                            ? `From ${formatCurrency(event.budget_min)}`
-                            : 'Not specified'
-                        }
+                        <i className="fas fa-dollar-sign me-1 text-success"></i>
+                        {event.budget_min && event.budget_max ? (
+                          <span className="text-success">
+                            {formatCurrency(event.budget_min)} - {formatCurrency(event.budget_max)}
+                          </span>
+                        ) : event.budget_min ? (
+                          <span className="text-success">
+                            From {formatCurrency(event.budget_min)}
+                          </span>
+                        ) : event.budget_max ? (
+                          <span className="text-success">
+                            Up to {formatCurrency(event.budget_max)}
+                          </span>
+                        ) : (
+                          <span className="text-muted">Budget not set</span>
+                        )}
                       </td>
                       <td>
                         <Badge bg={getStatusBadge(event.status)}>
                           {event.status.replace('_', ' ').toUpperCase()}
                         </Badge>
                       </td>
-                      
                       <td>
                         <div className="d-flex gap-1">
                           <Button

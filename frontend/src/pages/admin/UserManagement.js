@@ -225,11 +225,12 @@ const UserManagement = () => {
       </Card>
 
       {/* Users Table */}
-      <Card>
-        <Card.Header className="bg-white">
+      <Card className="shadow-sm">
+        <Card.Header className="bg-white py-3">
           <Row className="align-items-center">
             <Col>
-              <h5 className="mb-0">
+              <h5 className="mb-0 text-primary">
+                <i className="fas fa-users me-2"></i>
                 Users ({pagination.total || 0})
               </h5>
             </Col>
@@ -247,159 +248,145 @@ const UserManagement = () => {
           </Row>
         </Card.Header>
         <Card.Body className="p-0">
-          {loading ? (
-            <div className="text-center py-4">
-              <Spinner animation="border" size="sm" />
-              <span className="ms-2">Loading...</span>
-            </div>
-          ) : users.length === 0 ? (
-            <div className="text-center py-4">
-              <i className="fas fa-users fa-3x text-muted mb-3"></i>
-              <p className="text-muted">No users found</p>
-            </div>
-          ) : (
-            <Table responsive hover className="mb-0">
+          <div className="table-responsive">
+            <Table hover className="table-centered mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Joined</th>
-                  <th>Actions</th>
+                  <th className="border-0 rounded-start ps-3">User Details</th>
+                  <th className="border-0">Role</th>
+                  <th className="border-0">Contact</th>
+                  <th className="border-0">Joined Date</th>
+                  <th className="border-0">Status</th>
+                  <th className="border-0 rounded-end text-end pe-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {users.map(user => (
+                {users.map((user) => (
                   <tr key={user.id}>
-                    <td>
+                    <td className="ps-3">
                       <div className="d-flex align-items-center">
-                        <div className="avatar-circle me-3">
-                          {user.profile_image ? (
-                            <img 
-                              src={user.profile_image} 
-                              alt={user.name}
-                              className="rounded-circle"
-                              width="40"
-                              height="40"
-                            />
-                          ) : (
-                            <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style={{width: '40px', height: '40px'}}>
-                              {user.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
+                        <div className="flex-shrink-0">
+                          <div className="avatar avatar-sm rounded-circle bg-light text-primary">
+                            <i className="fas fa-user"></i>
+                          </div>
                         </div>
-                        <div>
-                          <div className="fw-bold">{user.name}</div>
+                        <div className="flex-grow-1 ms-2">
+                          <h6 className="mb-0">{user.name}</h6>
                           <small className="text-muted">{user.email}</small>
-                          {user.phone && (
-                            <div><small className="text-muted">{user.phone}</small></div>
-                          )}
                         </div>
                       </div>
                     </td>
                     <td>
-                      <Badge bg={getRoleBadgeVariant(user.role)}>
+                      <Badge 
+                        bg={getRoleBadgeVariant(user.role)}
+                        className="text-capitalize px-2 py-1"
+                      >
                         {user.role}
                       </Badge>
                     </td>
                     <td>
-                      {user.role === 'admin' ? (
-                        <Badge bg="success">Active</Badge>
-                      ) : (
-                        <Dropdown>
-                          <Dropdown.Toggle 
-                            as={Badge} 
-                            bg={getStatusBadgeVariant(user.status || 'unverified')}
-                            style={{ cursor: 'pointer' }}
-                            disabled={actionLoading}
-                          >
-                            {user.status || 'unverified'}
-                          </Dropdown.Toggle>
-                          <Dropdown.Menu>
-                            <Dropdown.Item 
-                              onClick={() => handleStatusChange(user.id, 'verified')}
-                              disabled={(user.status || 'unverified') === 'verified'}
-                            >
-                              <i className="fas fa-check-circle me-2 text-success"></i>
-                              Verified
-                            </Dropdown.Item>
-                            <Dropdown.Item 
-                              onClick={() => handleStatusChange(user.id, 'unverified')}
-                              disabled={(user.status || 'unverified') === 'unverified'}
-                            >
-                              <i className="fas fa-times-circle me-2 text-warning"></i>
-                              Unverified
-                            </Dropdown.Item>
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      )}
+                      <div>
+                        <div className="mb-1">
+                          <i className="fas fa-envelope me-1 text-muted"></i>
+                          {user.email}
+                        </div>
+                        {user.phone && (
+                          <div>
+                            <i className="fas fa-phone me-1 text-muted"></i>
+                            {user.phone}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
-                      <small>
-                        {new Date(user.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </small>
+                      <div className="text-muted">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </div>
                     </td>
                     <td>
-                      <Dropdown>
-                        <Dropdown.Toggle variant="outline-secondary" size="sm">
-                          <i className="fas fa-ellipsis-v"></i>
-                        </Dropdown.Toggle>
-                        <Dropdown.Menu>
-                          <Dropdown.Item onClick={() => openEditModal(user)}>
-                            <i className="fas fa-edit me-2"></i>
-                            Edit Details
-                          </Dropdown.Item>
-                          <Dropdown.Divider />
-                          <Dropdown.Item 
-                            className="text-danger"
-                            onClick={() => openDeleteModal(user)}
-                          >
-                            <i className="fas fa-trash me-2"></i>
-                            Delete User
-                          </Dropdown.Item>
-                        </Dropdown.Menu>
-                      </Dropdown>
+                      <Badge 
+                        bg={getStatusBadgeVariant(user.status)}
+                        className="text-capitalize px-2 py-1"
+                      >
+                        {user.status}
+                      </Badge>
+                    </td>
+                    <td className="text-end pe-3">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-primary me-2 p-0"
+                        onClick={() => openEditModal(user)}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </Button>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-danger p-0"
+                        onClick={() => openDeleteModal(user)}
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
+          </div>
+          
+          {users.length === 0 && !loading && (
+            <div className="text-center py-5">
+              <i className="fas fa-users text-muted fa-3x mb-3"></i>
+              <h5 className="text-muted">No users found</h5>
+              <p className="text-muted mb-0">Try adjusting your search or filters</p>
+            </div>
           )}
         </Card.Body>
-        
-        {/* Pagination */}
-        {pagination.total_pages > 1 && (
-          <Card.Footer className="bg-white">
+        {pagination.totalPages > 1 && (
+          <Card.Footer className="bg-white border-0 py-3">
             <Row className="align-items-center">
               <Col>
                 <small className="text-muted">
-                  Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
-                  {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
-                  {pagination.total} users
+                  Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, pagination.total)} of {pagination.total} users
                 </small>
               </Col>
               <Col xs="auto">
-                <Pagination size="sm" className="mb-0">
-                  <Pagination.Prev
-                    disabled={pagination.current_page <= 1}
-                    onClick={() => setCurrentPage(pagination.current_page - 1)}
+                <Pagination className="mb-0">
+                  <Pagination.First
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
                   />
-                  {[...Array(pagination.total_pages)].map((_, index) => (
-                    <Pagination.Item
-                      key={index + 1}
-                      active={index + 1 === pagination.current_page}
-                      onClick={() => setCurrentPage(index + 1)}
-                    >
-                      {index + 1}
-                    </Pagination.Item>
-                  ))}
+                  <Pagination.Prev
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  />
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .filter(page => (
+                      page === 1 ||
+                      page === pagination.totalPages ||
+                      Math.abs(page - currentPage) <= 1
+                    ))
+                    .map((page, index, array) => (
+                      <React.Fragment key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <Pagination.Ellipsis />
+                        )}
+                        <Pagination.Item
+                          active={page === currentPage}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Pagination.Item>
+                      </React.Fragment>
+                    ))}
                   <Pagination.Next
-                    disabled={pagination.current_page >= pagination.total_pages}
-                    onClick={() => setCurrentPage(pagination.current_page + 1)}
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === pagination.totalPages}
+                  />
+                  <Pagination.Last
+                    onClick={() => setCurrentPage(pagination.totalPages)}
+                    disabled={currentPage === pagination.totalPages}
                   />
                 </Pagination>
               </Col>

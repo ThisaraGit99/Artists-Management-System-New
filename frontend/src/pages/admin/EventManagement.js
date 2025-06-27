@@ -145,7 +145,7 @@ const EventManagement = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container className="py-4 px-4">
       {/* Header */}
       <Row className="mb-4">
         <Col>
@@ -164,7 +164,7 @@ const EventManagement = () => {
       )}
 
       {/* Filters and Search */}
-      <Card className="mb-4">
+      <Card className="mb-4 mx-0">
         <Card.Body>
           <Row>
             <Col md={3}>
@@ -234,7 +234,7 @@ const EventManagement = () => {
       </Card>
 
       {/* Events Table */}
-      <Card>
+      <Card className="mx-0">
         <Card.Header className="bg-white">
           <Row className="align-items-center">
             <Col>
@@ -508,13 +508,6 @@ const EventManagement = () => {
                     </>
                   )}
                 </p>
-
-                <h5>Booking Statistics</h5>
-                <div className="d-flex gap-2 mb-3">
-                  <Badge bg="secondary">Total: {selectedEvent.total_bookings || 0}</Badge>
-                  <Badge bg="warning">Pending: {selectedEvent.pending_bookings || 0}</Badge>
-                  <Badge bg="success">Confirmed: {selectedEvent.confirmed_bookings || 0}</Badge>
-                </div>
 
                 {selectedEvent.bookings && selectedEvent.bookings.length > 0 && (
                   <>

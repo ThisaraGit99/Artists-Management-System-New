@@ -112,9 +112,18 @@ const organizerController = {
     async getOrganizerBookings(req, res) {
         try {
             const userId = req.user.id;
-            const { status, page = 1, limit = 10 } = req.query;
+            const { 
+                status, 
+                payment_status,
+                artist_name,
+                date_from,
+                date_to,
+                sort_by = 'newest',
+                page = 1, 
+                limit = 10 
+            } = req.query;
 
-            console.log('Get organizer bookings - User ID:', userId, 'Status:', status, 'Page:', page, 'Limit:', limit);
+            console.log('Get organizer bookings - User ID:', userId, 'Filters:', req.query);
 
             // Get organizer ID with detailed error logging
             let organizerResult;
@@ -144,7 +153,6 @@ const organizerController = {
 
             if (organizerResult.data.length === 0) {
                 console.log('No organizer profile found for user:', userId);
-                // Return empty results instead of error - user may not have created organizer profile yet
                 return res.json({
                     success: true,
                     data: [],
@@ -168,6 +176,8 @@ const organizerController = {
                 b.organizer_id,
                 b.event_name, 
                 b.event_date, 
+                b.event_time,
+                b.venue_address,
                 b.total_amount, 
                 b.status,
                 b.payment_status,
@@ -184,36 +194,67 @@ const organizerController = {
 
             const params = [organizerDbId];
 
-            // Only add status filter if status is provided and not empty
+            // Add filters
             if (status && status.trim() !== '') {
                 query += ' AND b.status = ?';
                 params.push(status.trim());
-                console.log('Adding status filter:', status.trim());
             }
 
-            query += ' ORDER BY b.created_at DESC';
+            if (payment_status && payment_status.trim() !== '') {
+                query += ' AND b.payment_status = ?';
+                params.push(payment_status.trim());
+            }
 
-            // Add pagination - use direct values instead of parameters to avoid MySQL issues
+            if (artist_name && artist_name.trim() !== '') {
+                query += ' AND u.name LIKE ?';
+                params.push(`%${artist_name.trim()}%`);
+            }
+
+            if (date_from && date_from.trim() !== '') {
+                query += ' AND DATE(b.event_date) >= ?';
+                params.push(date_from.trim());
+            }
+
+            if (date_to && date_to.trim() !== '') {
+                query += ' AND DATE(b.event_date) <= ?';
+                params.push(date_to.trim());
+            }
+
+            // Add sorting
+            switch (sort_by) {
+                case 'oldest':
+                    query += ' ORDER BY b.created_at ASC';
+                    break;
+                case 'event_date':
+                    query += ' ORDER BY b.event_date ASC';
+                    break;
+                case 'amount_high':
+                    query += ' ORDER BY b.total_amount DESC';
+                    break;
+                case 'amount_low':
+                    query += ' ORDER BY b.total_amount ASC';
+                    break;
+                case 'newest':
+                default:
+                    query += ' ORDER BY b.created_at DESC';
+            }
+
+            // Get total count for pagination
+            const countQuery = query.replace(/SELECT.*FROM/, 'SELECT COUNT(*) as total FROM');
+            const countResult = await executeQuery(countQuery, params);
+            const total = countResult.data[0].total;
+
+            // Add pagination
             const offset = (parseInt(page) - 1) * parseInt(limit);
-            query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+            query += ` LIMIT ${parseInt(limit)} OFFSET ${offset}`;
 
             console.log('Final query:', query);
-            console.log('Query params:', params);
+            console.log('Query parameters:', params);
 
             const result = await executeQuery(query, params);
 
             if (result.success) {
-                // Get total count for pagination
-                let countQuery = 'SELECT COUNT(*) as total FROM bookings WHERE organizer_id = ?';
-                const countParams = [organizerDbId];
-                
-                if (status && status.trim() !== '') {
-                    countQuery += ' AND status = ?';
-                    countParams.push(status.trim());
-                }
-
-                const countResult = await executeQuery(countQuery, countParams);
-                const total = countResult.success ? countResult.data[0].total : 0;
+                const totalPages = Math.ceil(total / parseInt(limit));
 
                 res.json({
                     success: true,
@@ -221,17 +262,16 @@ const organizerController = {
                     pagination: {
                         page: parseInt(page),
                         limit: parseInt(limit),
-                        total: total,
-                        totalPages: Math.ceil(total / parseInt(limit))
+                        total,
+                        totalPages
                     }
                 });
             } else {
-                console.error('Bookings query failed:', result.error);
-                throw new Error(result.error || 'Failed to fetch bookings');
+                throw new Error('Failed to fetch bookings');
             }
 
         } catch (error) {
-            console.error('Get organizer bookings error:', error);
+            console.error('Get bookings error:', error);
             res.status(500).json({
                 success: false,
                 message: 'Failed to fetch bookings',

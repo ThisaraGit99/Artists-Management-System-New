@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Badge, Modal, Form, Spinner, Alert, InputGroup } from 'react-bootstrap';
+import { Card, Row, Col, Button, Badge, Modal, Form, Spinner, Alert, InputGroup, Container } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import eventService from '../../services/eventService';
 import eventApplicationService from '../../services/eventApplicationService';
@@ -11,6 +11,7 @@ const EventBrowser = () => {
   const [error, setError] = useState('');
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [applicationData, setApplicationData] = useState({
     proposed_budget: '',
     message: ''
@@ -18,11 +19,20 @@ const EventBrowser = () => {
   const [applying, setApplying] = useState(false);
   const [myApplications, setMyApplications] = useState([]);
   
-  // Filter and sort states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEventType, setSelectedEventType] = useState('all');
-  const [sortBy, setSortBy] = useState('date_upcoming');
-  const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
+  // Filter state
+  const [filters, setFilters] = useState({
+    searchTerm: '',
+    eventType: 'all',
+    city: '',
+    state: '',
+    budgetMin: '',
+    budgetMax: '',
+    dateFrom: '',
+    dateTo: '',
+    showUpcomingOnly: true,
+    sortBy: 'date_upcoming',
+    organizerName: ''
+  });
 
   useEffect(() => {
     loadEvents();
@@ -31,33 +41,81 @@ const EventBrowser = () => {
 
   useEffect(() => {
     filterAndSortEvents();
-  }, [events, searchTerm, selectedEventType, sortBy, showUpcomingOnly]);
+  }, [events, filters]);
 
   const filterAndSortEvents = () => {
     let filtered = [...events];
     
     // Filter by search term
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
+    if (filters.searchTerm) {
+      const search = filters.searchTerm.toLowerCase();
       filtered = filtered.filter(event =>
         (event.title || event.name || '').toLowerCase().includes(search) ||
-        (event.description || '').toLowerCase().includes(search) ||
-        (event.venue_city || '').toLowerCase().includes(search) ||
-        (event.venue_state || '').toLowerCase().includes(search) ||
-        (event.organizer_name || '').toLowerCase().includes(search) ||
-        (event.event_type || '').toLowerCase().includes(search)
+        (event.description || '').toLowerCase().includes(search)
       );
     }
     
     // Filter by event type
-    if (selectedEventType !== 'all') {
+    if (filters.eventType !== 'all') {
       filtered = filtered.filter(event => 
-        (event.event_type || '').toLowerCase() === selectedEventType.toLowerCase()
+        (event.event_type || '').toLowerCase() === filters.eventType.toLowerCase()
       );
     }
+
+    // Filter by city
+    if (filters.city) {
+      const citySearch = filters.city.toLowerCase();
+      filtered = filtered.filter(event => 
+        (event.venue_city || '').toLowerCase().includes(citySearch)
+      );
+    }
+
+    // Filter by state
+    if (filters.state) {
+      const stateSearch = filters.state.toLowerCase();
+      filtered = filtered.filter(event => 
+        (event.venue_state || '').toLowerCase().includes(stateSearch)
+      );
+    }
+
+    // Filter by organizer
+    if (filters.organizerName) {
+      const organizerSearch = filters.organizerName.toLowerCase();
+      filtered = filtered.filter(event => 
+        (event.organizer_name || '').toLowerCase().includes(organizerSearch)
+      );
+    }
+
+    // Filter by budget range
+    if (filters.budgetMin) {
+      filtered = filtered.filter(event => 
+        (event.budget_max || event.budget || 0) >= parseFloat(filters.budgetMin)
+      );
+    }
+    if (filters.budgetMax) {
+      filtered = filtered.filter(event => 
+        (event.budget_max || event.budget || 0) <= parseFloat(filters.budgetMax)
+      );
+    }
+
+    // Filter by date range
+    if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      filtered = filtered.filter(event => {
+        const eventDate = new Date(event.date || event.event_date);
+        return eventDate >= fromDate;
+      });
+    }
+    if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      filtered = filtered.filter(event => {
+        const eventDate = new Date(event.date || event.event_date);
+        return eventDate <= toDate;
+      });
+    }
     
-    // Filter by upcoming/past
-    if (showUpcomingOnly) {
+    // Filter upcoming only
+    if (filters.showUpcomingOnly) {
       const now = new Date();
       filtered = filtered.filter(event => {
         const eventDate = new Date(event.date || event.event_date);
@@ -71,38 +129,52 @@ const EventBrowser = () => {
       const dateB = new Date(b.date || b.event_date);
       const now = new Date();
       
-      switch (sortBy) {
+      switch (filters.sortBy) {
         case 'date_upcoming':
-          // Upcoming events first, then by closest date
           const aIsUpcoming = dateA >= now;
           const bIsUpcoming = dateB >= now;
-          
           if (aIsUpcoming && !bIsUpcoming) return -1;
           if (!aIsUpcoming && bIsUpcoming) return 1;
-          
           return aIsUpcoming ? dateA - dateB : dateB - dateA;
-          
         case 'date_newest':
           return dateB - dateA;
-          
         case 'date_oldest':
           return dateA - dateB;
-          
         case 'budget_high':
           return (b.budget_max || b.budget || 0) - (a.budget_max || a.budget || 0);
-          
         case 'budget_low':
           return (a.budget_max || a.budget || 0) - (b.budget_max || b.budget || 0);
-          
         case 'alphabetical':
           return (a.title || a.name || '').localeCompare(b.title || b.name || '');
-          
         default:
           return 0;
       }
     });
     
     setFilteredEvents(filtered);
+  };
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      searchTerm: '',
+      eventType: 'all',
+      city: '',
+      state: '',
+      budgetMin: '',
+      budgetMax: '',
+      dateFrom: '',
+      dateTo: '',
+      showUpcomingOnly: true,
+      sortBy: 'date_upcoming',
+      organizerName: ''
+    });
   };
 
   const loadEvents = async () => {
@@ -240,173 +312,254 @@ const EventBrowser = () => {
     return types;
   };
 
-  if (loading) {
-    return (
-      <div className="text-center py-5">
-        <Spinner animation="border" role="status" variant="primary">
-          <span className="visually-hidden">Loading events...</span>
-        </Spinner>
-        <p className="mt-3">Loading available events...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="danger">
-        <i className="fas fa-exclamation-triangle me-2"></i>
-        {error}
-        <Button variant="outline-danger" size="sm" className="ms-3" onClick={loadEvents}>
-          Try Again
-        </Button>
-      </Alert>
-    );
-  }
-
   return (
-    <>
-      {/* Header and Filters */}
-      <div className="mb-4">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4 className="mb-0">
-            <i className="fas fa-calendar-alt me-2 text-primary"></i>
-            Available Events
-          </h4>
-          <Button variant="outline-primary" size="sm" onClick={loadEvents}>
-            <i className="fas fa-sync-alt me-1"></i>
-            Refresh
-          </Button>
-        </div>
-
-        {/* Event Stats */}
-        {events.length > 0 && (
-          <div className="row mb-3">
-            <div className="col-md-8">
-              <div className="d-flex align-items-center flex-wrap gap-3">
-                <span className="badge bg-success fs-6">
-                  <i className="fas fa-calendar-check me-1"></i>
-                  {filteredEvents.filter(e => new Date(e.date || e.event_date) >= new Date()).length} Upcoming
-                </span>
-                <span className="badge bg-info fs-6">
-                  <i className="fas fa-list me-1"></i>
-                  {filteredEvents.length} Total {showUpcomingOnly ? 'Upcoming ' : ''}Events
-                </span>
-                {showUpcomingOnly && (
-                  <span className="badge bg-warning fs-6">
-                    <i className="fas fa-filter me-1"></i>
-                    Filter: Upcoming Only
-                  </span>
-                )}
-                <span className="badge bg-primary fs-6">
-                  <i className="fas fa-dollar-sign me-1"></i>
-                  Up to {formatCurrency(Math.max(...events.map(e => e.budget_max || e.budget || 0)))}
-                </span>
-              </div>
+    <Container className="py-4 px-4">
+      {/* Header */}
+      <Row className="mb-4 mx-0">
+        <Col>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 className="mb-1">
+                <i className="fas fa-calendar-search me-2"></i>
+                Available Events
+              </h2>
+              <p className="text-muted mb-0">
+                Browse and apply for upcoming events that match your skills
+              </p>
             </div>
-            <div className="col-md-4 text-end">
-              <small className="text-muted">
-                <i className="fas fa-clock me-1"></i>
-                Last updated: {new Date().toLocaleTimeString()}
-              </small>
+            <div>
+              <Button 
+                variant="outline-secondary" 
+                className="me-2"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <i className="fas fa-filter me-1"></i>
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </Button>
+              <Button 
+                variant="outline-primary"
+                onClick={loadEvents}
+                disabled={loading}
+              >
+                <i className="fas fa-sync-alt me-1"></i>
+                Refresh
+              </Button>
             </div>
           </div>
-        )}
+        </Col>
+      </Row>
 
-        {/* Filters Row */}
-        <div className="row g-3">
-          {/* Search */}
-          <div className="col-md-4">
-            <InputGroup>
-              <InputGroup.Text>
-                <i className="fas fa-search"></i>
-              </InputGroup.Text>
-              <Form.Control
-                type="text"
-                placeholder="Search events, location, organizer..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </InputGroup>
-          </div>
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError('')} className="mb-4">
+          {error}
+        </Alert>
+      )}
 
-          {/* Event Type Filter */}
-          <div className="col-md-3">
-            <Form.Select 
-              value={selectedEventType} 
-              onChange={(e) => setSelectedEventType(e.target.value)}
-            >
-              <option value="all">All Types</option>
-              {getEventTypes().map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </Form.Select>
-          </div>
-
-          {/* Sort By */}
-          <div className="col-md-3">
-            <Form.Select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="date_upcoming">Upcoming First</option>
-              <option value="date_newest">Newest Posted</option>
-              <option value="date_oldest">Oldest Posted</option>
-              <option value="budget_high">Highest Budget</option>
-              <option value="budget_low">Lowest Budget</option>
-              <option value="alphabetical">A-Z</option>
-            </Form.Select>
-          </div>
-
-          {/* Show Only Upcoming */}
-          <div className="col-md-2">
-            <div className="d-flex align-items-center">
-              <Form.Check
-                type="switch"
-                id="upcoming-switch"
-                label={
-                  <span className="d-flex align-items-center">
-                    Upcoming Only
-                    {showUpcomingOnly && (
-                      <Badge bg="primary" className="ms-2 small">
-                        ON
-                      </Badge>
-                    )}
-                  </span>
-                }
-                checked={showUpcomingOnly}
-                onChange={(e) => setShowUpcomingOnly(e.target.checked)}
-              />
+      {/* Filter Section */}
+      {showFilters && (
+        <Card className="mb-4 mx-0">
+          <Card.Header className="bg-light">
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">
+                <i className="fas fa-sliders-h me-2"></i>
+                Filter Events
+              </h5>
+              <Button 
+                variant="link" 
+                className="text-muted p-0" 
+                onClick={clearFilters}
+              >
+                <i className="fas fa-times me-1"></i>
+                Clear All
+              </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </Card.Header>
+          <Card.Body>
+            <Row className="g-3">
+              {/* Search */}
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label>Search Events</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>
+                      <i className="fas fa-search"></i>
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Search by event title or description..."
+                      value={filters.searchTerm}
+                      onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
 
-      {/* Events Display */}
-      {filteredEvents.length === 0 ? (
-        <div className="text-center py-5">
-          <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-          <h5 className="text-muted">
-            {events.length === 0 ? 'No Events Available' : 'No Events Match Your Filters'}
-          </h5>
-          <p className="text-muted">
-            {events.length === 0 
-              ? 'Check back later for new event opportunities!' 
-              : 'Try adjusting your search criteria or filters.'
-            }
-          </p>
-          {events.length > 0 && (
-            <Button variant="outline-primary" onClick={() => {
-              setSearchTerm('');
-              setSelectedEventType('all');
-              setShowUpcomingOnly(false);
-            }}>
-              Clear Filters
-            </Button>
-          )}
-        </div>
-      ) : (
-        <Row>
-          {filteredEvents.map(event => {
+              {/* Event Type */}
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Event Type</Form.Label>
+                  <Form.Select
+                    value={filters.eventType}
+                    onChange={(e) => handleFilterChange('eventType', e.target.value)}
+                  >
+                    <option value="all">All Event Types</option>
+                    {getEventTypes().map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Location Filters */}
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>City</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Filter by city..."
+                    value={filters.city}
+                    onChange={(e) => handleFilterChange('city', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>State</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Filter by state..."
+                    value={filters.state}
+                    onChange={(e) => handleFilterChange('state', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              {/* Budget Range */}
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Min Budget</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>$</InputGroup.Text>
+                    <Form.Control
+                      type="number"
+                      placeholder="0"
+                      value={filters.budgetMin}
+                      onChange={(e) => handleFilterChange('budgetMin', e.target.value)}
+                      min="0"
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Max Budget</Form.Label>
+                  <InputGroup>
+                    <InputGroup.Text>$</InputGroup.Text>
+                    <Form.Control
+                      type="number"
+                      placeholder="Any"
+                      value={filters.budgetMax}
+                      onChange={(e) => handleFilterChange('budgetMax', e.target.value)}
+                      min="0"
+                    />
+                  </InputGroup>
+                </Form.Group>
+              </Col>
+
+              {/* Date Range */}
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>From Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={filters.dateFrom}
+                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>To Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={filters.dateTo}
+                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              {/* Organizer Name */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label>Organizer Name</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Filter by organizer name..."
+                    value={filters.organizerName}
+                    onChange={(e) => handleFilterChange('organizerName', e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+
+              {/* Sort and Display Options */}
+              <Col md={3}>
+                <Form.Group>
+                  <Form.Label>Sort By</Form.Label>
+                  <Form.Select
+                    value={filters.sortBy}
+                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  >
+                    <option value="date_upcoming">Upcoming First</option>
+                    <option value="date_newest">Newest First</option>
+                    <option value="date_oldest">Oldest First</option>
+                    <option value="budget_high">Budget (High to Low)</option>
+                    <option value="budget_low">Budget (Low to High)</option>
+                    <option value="alphabetical">Alphabetical</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              <Col md={3}>
+                <Form.Group className="mt-4 pt-2">
+                  <Form.Check
+                    type="switch"
+                    id="upcoming-switch"
+                    label="Show Upcoming Events Only"
+                    checked={filters.showUpcomingOnly}
+                    onChange={(e) => handleFilterChange('showUpcomingOnly', e.target.checked)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      )}
+
+      {/* Events Grid */}
+      <Row className="g-4 mx-0">
+        {loading ? (
+          <Col xs={12} className="text-center py-5">
+            <Spinner animation="border" role="status" variant="primary">
+              <span className="visually-hidden">Loading events...</span>
+            </Spinner>
+            <p className="mt-3">Loading available events...</p>
+          </Col>
+        ) : filteredEvents.length === 0 ? (
+          <Col xs={12} className="text-center py-5">
+            <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h5>No events found</h5>
+            <p className="text-muted">
+              {events.length === 0 
+                ? "There are no available events at the moment." 
+                : "Try adjusting your filters to see more events."}
+            </p>
+          </Col>
+        ) : (
+          filteredEvents.map(event => {
             const eventDate = new Date(event.date || event.event_date);
             const isUpcoming = eventDate >= new Date();
             const daysUntil = Math.ceil((eventDate - new Date()) / (1000 * 60 * 60 * 24));
@@ -541,9 +694,9 @@ const EventBrowser = () => {
                 </Card>
               </Col>
             );
-          })}
-        </Row>
-      )}
+          })
+        )}
+      </Row>
 
       {/* Application Modal */}
       <Modal show={showApplicationModal} onHide={() => setShowApplicationModal(false)} size="lg">
@@ -624,7 +777,7 @@ const EventBrowser = () => {
           </Modal.Footer>
         </Form>
       </Modal>
-    </>
+    </Container>
   );
 };
 
