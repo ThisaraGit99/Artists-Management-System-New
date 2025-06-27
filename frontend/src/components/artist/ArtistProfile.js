@@ -8,7 +8,7 @@ import AvailabilityManagement from './AvailabilityManagement';
 import PortfolioManagement from './PortfolioManagement';
 import RatingsDisplay from './RatingsDisplay';
 
-const ArtistProfile = ({ artistId }) => {
+const ArtistProfile = () => {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
     const [activeTab, setActiveTab] = useState('profile');
@@ -17,27 +17,40 @@ const ArtistProfile = ({ artistId }) => {
 
     useEffect(() => {
         fetchProfileData();
-    }, [artistId]);
+    }, []);
 
     const fetchProfileData = async () => {
         try {
             setLoading(true);
+            setError('');
             
-            // Fetch profile data and ratings in parallel
-            const [profileResponse, ratingsResponse] = await Promise.all([
-                artistService.getArtistDetails(artistId),
-                artistService.getArtistRatings(artistId)
-            ]);
-
+            // Fetch profile data first
+            const profileResponse = await artistService.getProfile();
+            let profileData = null;
+            
             if (profileResponse.data.success) {
-                setProfile(profileResponse.data.data);
+                profileData = profileResponse.data.data;
+                setProfile(profileData);
+            } else {
+                setError('Failed to load profile data');
             }
 
-            if (ratingsResponse.data.success) {
-                setRatings(ratingsResponse.data.data);
+            // Try to fetch ratings, but don't fail if it doesn't work
+            try {
+                const ratingsResponse = await artistService.getArtistRatings();
+                if (ratingsResponse.data.success) {
+                    setRatings(ratingsResponse.data.data);
+                }
+            } catch (ratingError) {
+                console.warn('Failed to load ratings:', ratingError.message);
+                // Don't set this as a main error since profile is more important
             }
+            
         } catch (error) {
             console.error('Error fetching artist data:', error);
+            const errorMessage = error.response?.data?.message || 'Failed to load profile data. Please try again.';
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -45,17 +58,35 @@ const ArtistProfile = ({ artistId }) => {
 
     const handleProfileUpdate = async (data) => {
         try {
-            if (profile) {
-                await artistService.updateProfile(data);
-                toast.success('Profile updated successfully!');
-            } else {
-                await artistService.completeProfile(data);
-                toast.success('Profile created successfully!');
+            // Always try to update first, since we loaded profile data
+            try {
+                const response = await artistService.updateProfile(data);
+                if (response.data.success) {
+                    toast.success('Profile updated successfully!');
+                    fetchProfileData(); // Refresh the data
+                } else {
+                    toast.error(response.data.message || 'Failed to update profile');
+                }
+            } catch (updateError) {
+                // If update fails with 404 (profile doesn't exist), try to create
+                if (updateError.response?.status === 404) {
+                    const response = await artistService.completeProfile(data);
+                    if (response.data.success) {
+                        toast.success('Profile created successfully!');
+                        fetchProfileData(); // Refresh the data
+                    } else {
+                        toast.error(response.data.message || 'Failed to create profile');
+                    }
+                } else {
+                    // For other errors, show the error message
+                    const errorMessage = updateError.response?.data?.message || 'Failed to update profile. Please try again.';
+                    toast.error(errorMessage);
+                }
             }
-            fetchProfileData();
         } catch (error) {
             console.error('Profile update error:', error);
-            toast.error('Failed to update profile. Please try again.');
+            const errorMessage = error.response?.data?.message || 'Failed to save profile. Please try again.';
+            toast.error(errorMessage);
         }
     };
 
