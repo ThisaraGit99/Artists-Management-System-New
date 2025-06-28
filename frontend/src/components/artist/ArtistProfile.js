@@ -26,13 +26,17 @@ const ArtistProfile = () => {
             
             // Fetch profile data first
             const profileResponse = await artistService.getProfile();
-            console.log('Fetched profile data:', profileResponse.data); // Debug log
+            console.log('🔍 Raw API Response:', profileResponse.data); // Debug log
             let profileData = null;
 
             if (profileResponse.data.success) {
                 profileData = profileResponse.data.data;
+                console.log('✅ Extracted profile data:', profileData);
+                console.log('   - profile_image in data:', profileData?.profile_image);
+                console.log('   - profile data keys:', profileData ? Object.keys(profileData) : 'No data');
                 setProfile(profileData);
             } else {
+                console.log('❌ API response indicates failure:', profileResponse.data);
                 setError('Failed to load profile data');
             }
 

@@ -27,20 +27,22 @@ const artistService = {
     // Profile Management
     getProfile: () => artistAPI.get('/profile'),
     updateProfile: async (data) => {
-        console.log('Sending profile update request:', {
-            nic: data.nic,
-            bio: data.bio?.substring(0, 20) + '...',
-            genres: data.genres
-        });
+        console.log('Sending profile update request with FormData');
         
         try {
-            const response = await artistAPI.put('/profile', data);
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            };
+            
+            const response = await artistAPI.put('/profile', data, config);
             console.log('Profile update response:', response.data);
             
             // Immediately verify the update
             const verifyResponse = await artistAPI.get('/profile');
             console.log('Profile after update:', {
-                nic: verifyResponse.data.data?.nic,
+                profile_image: verifyResponse.data.data?.profile_image,
                 bio: verifyResponse.data.data?.bio?.substring(0, 20) + '...',
                 genres: verifyResponse.data.data?.genres
             });
@@ -51,7 +53,14 @@ const artistService = {
             throw error;
         }
     },
-    completeProfile: (data) => artistAPI.post('/profile/complete', data),
+    completeProfile: async (data) => {
+        const config = {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        };
+        return artistAPI.post('/profile/complete', data, config);
+    },
 
     // Skills Management
     getSkills: () => artistAPI.get('/skills'),

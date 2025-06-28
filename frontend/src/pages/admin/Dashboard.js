@@ -166,18 +166,6 @@ const AdminDashboard = () => {
                     Analytics
                   </Button>
                 </Col>
-              </Row>
-              <Row>
-                <Col md={3} className="mb-3">
-                  <Button 
-                    variant="outline-warning" 
-                    className="w-100"
-                    onClick={() => navigate('/admin/settings')}
-                  >
-                    <i className="fas fa-cog me-2"></i>
-                    Settings
-                  </Button>
-                </Col>
                 <Col md={3} className="mb-3">
                   <Button 
                     variant="outline-secondary" 
@@ -189,54 +177,6 @@ const AdminDashboard = () => {
                   </Button>
                 </Col>
               </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* System Status */}
-      <Row>
-        <Col lg={6} className="mb-4">
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white border-0">
-              <h5 className="fw-bold mb-0">
-                <i className="fas fa-server me-2"></i>
-                System Status
-              </h5>
-            </Card.Header>
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <span>Database</span>
-                <span className="badge bg-success">Online</span>
-              </div>
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <span>API Server</span>
-                <span className="badge bg-success">Online</span>
-              </div>
-              <div className="d-flex justify-content-between align-items-center">
-                <span>Payment Gateway</span>
-                <span className="badge bg-success">Online</span>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        
-        <Col lg={6} className="mb-4">
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white border-0">
-              <h5 className="fw-bold mb-0">
-                <i className="fas fa-exclamation-triangle me-2"></i>
-                Recent Alerts
-              </h5>
-            </Card.Header>
-            <Card.Body>
-              <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '150px' }}>
-                <div className="text-center text-muted">
-                  <i className="fas fa-shield-alt fa-3x mb-3"></i>
-                  <p>No alerts</p>
-                  <small>System running smoothly</small>
-                </div>
-              </div>
             </Card.Body>
           </Card>
         </Col>

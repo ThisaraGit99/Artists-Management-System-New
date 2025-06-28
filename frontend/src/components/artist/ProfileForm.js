@@ -21,6 +21,8 @@ const ProfileForm = ({ profile, onSubmit }) => {
 
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
+    const [profileImage, setProfileImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
 
     const genreOptions = [
         'Rock', 'Pop', 'Jazz', 'Blues', 'Classical', 'Electronic', 'Hip Hop', 
@@ -29,7 +31,15 @@ const ProfileForm = ({ profile, onSubmit }) => {
     ];
 
     useEffect(() => {
+        console.log('🔄 ProfileForm useEffect triggered with profile:', profile);
+        
         if (profile) {
+            console.log('✅ Profile data received:');
+            console.log('   - profile.profile_image:', profile.profile_image);
+            console.log('   - profile.bio length:', profile.bio ? profile.bio.length : 'null');
+            console.log('   - profile.name:', profile.name);
+            console.log('   - profile object keys:', Object.keys(profile));
+
             // Helper function to safely parse JSON
             const safeJsonParse = (jsonString, fallback) => {
                 if (!jsonString) return fallback;
@@ -61,6 +71,51 @@ const ProfileForm = ({ profile, onSubmit }) => {
                     spotify: ''
                 })
             });
+
+            // Set existing profile image preview
+            console.log('🖼️ Processing profile image...');
+            console.log('   - Raw profile_image value:', profile.profile_image);
+            console.log('   - Type:', typeof profile.profile_image);
+            console.log('   - Is truthy:', !!profile.profile_image);
+            console.log('   - After trim:', profile.profile_image ? profile.profile_image.trim() : 'N/A');
+            
+            if (profile.profile_image) {
+                // Clean the profile image path by removing any extra quotes
+                let cleanPath = profile.profile_image.replace(/['"]/g, '');
+                
+                // Get base URL without /api
+                const baseUrl = 'http://localhost:5000';
+                
+                // Ensure path starts with /uploads
+                if (!cleanPath.startsWith('/uploads')) {
+                    cleanPath = '/uploads' + cleanPath;
+                }
+                
+                const imageUrl = baseUrl + cleanPath;
+                console.log('🔍 Image processing:');
+                console.log('   Original path:', profile.profile_image);
+                console.log('   Cleaned path:', cleanPath);
+                console.log('   Base URL:', baseUrl);
+                console.log('   Final URL:', imageUrl);
+
+                // Validate the image URL
+                const img = new Image();
+                img.onload = () => {
+                    console.log('✅ Image loaded successfully:', imageUrl);
+                    setImagePreview(imageUrl);
+                };
+                img.onerror = () => {
+                    console.log('❌ Failed to load image:', imageUrl);
+                    setImagePreview(null);
+                };
+                img.src = imageUrl;
+            } else {
+                console.log('❌ No profile image path found');
+                setImagePreview(null);
+            }
+        } else {
+            console.log('❌ No profile data provided, setting preview to null');
+            setImagePreview(null);
         }
     }, [profile]);
 
@@ -113,6 +168,55 @@ const ProfileForm = ({ profile, onSubmit }) => {
                 genres: ''
             }));
         }
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                setErrors(prev => ({ ...prev, profileImage: 'Please select an image file' }));
+                return;
+            }
+            
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                setErrors(prev => ({ ...prev, profileImage: 'Image size should be less than 5MB' }));
+                return;
+            }
+            
+            setProfileImage(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setImagePreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+            
+            // Clear error
+            if (errors.profileImage) {
+                setErrors(prev => ({ ...prev, profileImage: '' }));
+            }
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setProfileImage(null);
+        setImagePreview(null);
+        
+        // Clear the file input
+        const fileInput = document.getElementById('profileImageInput');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        // Clear any related errors
+        if (errors.profileImage) {
+            setErrors(prev => ({ ...prev, profileImage: '' }));
+        }
+        
+        console.log('🗑️ Profile image removed');
     };
 
     const validateForm = () => {
@@ -177,7 +281,24 @@ const ProfileForm = ({ profile, onSubmit }) => {
 
         setSubmitting(true);
         try {
-            await onSubmit(formData);
+            // Create FormData to handle file upload
+            const submitData = new FormData();
+            
+            // Add all form fields
+            Object.keys(formData).forEach(key => {
+                if (key === 'social_links' || key === 'genres') {
+                    submitData.append(key, JSON.stringify(formData[key]));
+                } else {
+                    submitData.append(key, formData[key]);
+                }
+            });
+            
+            // Add profile image if selected
+            if (profileImage) {
+                submitData.append('profileImage', profileImage);
+            }
+            
+            await onSubmit(submitData);
             setErrors({});
         } catch (error) {
             console.error('Submit error:', error);
@@ -196,6 +317,85 @@ const ProfileForm = ({ profile, onSubmit }) => {
             </div>
 
             <Form onSubmit={handleSubmit}>
+                {/* Profile Image Upload Section */}
+                <Row className="mb-4">
+                    <Col md={12}>
+                        <Form.Group>
+                            <Form.Label>Profile Image</Form.Label>
+                            <div className="d-flex align-items-center gap-3">
+                                <div className="profile-image-preview">
+                                    {imagePreview ? (
+                                        <img
+                                            src={imagePreview}
+                                            alt="Profile Preview"
+                                            style={{
+                                                width: '100px',
+                                                height: '100px',
+                                                objectFit: 'cover',
+                                                borderRadius: '50%',
+                                                border: '3px solid #dee2e6'
+                                            }}
+                                            onError={(e) => {
+                                                console.log('❌ Profile image failed to load:', imagePreview);
+                                                console.log('Error details:', e.target.error);
+                                                e.target.onerror = null; // Prevent infinite loop
+                                                e.target.src = ''; // Clear the source
+                                                setImagePreview(null);
+                                            }}
+                                            onLoad={(e) => {
+                                                console.log('✅ Profile image loaded successfully:', e.target.src);
+                                                e.target.style.display = 'block'; // Ensure image is visible
+                                            }}
+                                        />
+                                    ) : (
+                                        <div
+                                            style={{
+                                                width: '100px',
+                                                height: '100px',
+                                                backgroundColor: '#f8f9fa',
+                                                borderRadius: '50%',
+                                                border: '3px dashed #dee2e6',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#6c757d'
+                                            }}
+                                        >
+                                            <i className="fas fa-user fa-2x"></i>
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <Form.Control
+                                        type="file"
+                                        id="profileImageInput"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        isInvalid={!!errors.profileImage}
+                                        className="mb-2"
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {errors.profileImage}
+                                    </Form.Control.Feedback>
+                                    {imagePreview || profileImage ? (
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={handleRemoveImage}
+                                        >
+                                            <i className="fas fa-trash me-1"></i>
+                                            Remove
+                                        </Button>
+                                    ) : null}
+                                    <Form.Text className="text-muted d-block">
+                                        Upload a profile image (max 5MB, JPG/PNG/GIF)
+                                    </Form.Text>
+                                </div>
+                            </div>
+                        </Form.Group>
+                    </Col>
+                </Row>
+
                 <Row>
                     <Col md={12}>
                         <Form.Group className="mb-3">
@@ -323,7 +523,7 @@ const ProfileForm = ({ profile, onSubmit }) => {
                                 <Col key={genre} xs={6} sm={4} md={3} className="mb-2">
                                     <Form.Check
                                         type="checkbox"
-                                        id={`genre-${genre}`}
+                                        id={'genre-' + genre}
                                         label={genre}
                                         checked={formData.genres.includes(genre)}
                                         onChange={() => handleGenreChange(genre)}
@@ -346,14 +546,14 @@ const ProfileForm = ({ profile, onSubmit }) => {
                             <Col key={platform} md={6} className="mb-3">
                                 <Form.Group>
                                     <Form.Label className="text-capitalize">
-                                        <i className={`fab fa-${platform} me-2`}></i>
+                                        <i className={'fab fa-' + platform + ' me-2'}></i>
                                         {platform}
                                     </Form.Label>
                                     <Form.Control
                                         type="url"
                                         value={formData.social_links[platform]}
                                         onChange={(e) => handleSocialLinkChange(platform, e.target.value)}
-                                        placeholder={`Your ${platform} profile URL`}
+                                        placeholder={'Your ' + platform + ' profile URL'}
                                     />
                                 </Form.Group>
                             </Col>

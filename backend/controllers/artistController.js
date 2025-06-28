@@ -284,6 +284,23 @@ const artistController = {
             // Format data for frontend consumption
             const formattedArtist = formatArtistProfile(artist);
             
+                        // Ensure profile_image is included in response and properly formatted
+            if (artist.profile_image) {
+                // Clean the profile image path by removing any extra quotes
+                let cleanPath = artist.profile_image.replace(/['"]/g, '');
+                // Ensure the path starts with /uploads
+                if (!cleanPath.startsWith('/uploads')) {
+                    cleanPath = '/uploads' + cleanPath;
+                }
+                formattedArtist.profile_image = cleanPath;
+            }
+
+            console.log('🔍 Final API response for getProfile:');
+            console.log('   - User ID:', artistId);
+            console.log('   - profile_image:', formattedArtist.profile_image);
+            console.log('   - name:', formattedArtist.name);
+            console.log('   - Response structure keys:', Object.keys(formattedArtist));
+
             res.json({
                 success: true,
                 data: formattedArtist
@@ -308,6 +325,17 @@ const artistController = {
                 nic,
                 bio: bio?.substring(0, 20) + '...' // Log just the start of bio for brevity
             });
+            
+            // Handle uploaded profile image
+            let profileImageUrl = null;
+            if (req.file) {
+                // Remove any extra quotes that might be in the filename
+                const cleanFilename = req.file.filename.replace(/['"]/g, '');
+                profileImageUrl = `/uploads/profile-images/${cleanFilename}`;
+                // Ensure the URL doesn't have extra quotes
+                profileImageUrl = profileImageUrl.replace(/['"]/g, '');
+                console.log('Profile image uploaded:', profileImageUrl);
+            }
             
             // Validate data
             const validation = validateJsonData({ genres, social_links });
@@ -342,8 +370,8 @@ const artistController = {
                 console.log('Artist not found, creating new profile');
                 // If artist doesn't exist, create new profile
                 const createResult = await executeQuery(
-                    `INSERT INTO artists (user_id, bio, nic, genres, experience_years, hourly_rate, location, website, social_links, profile_complete)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    `INSERT INTO artists (user_id, bio, profile_image, nic, genres, experience_years, hourly_rate, location, website, social_links, profile_complete)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         CASE 
                             WHEN (? IS NOT NULL AND ? != '' AND ? IS NOT NULL AND ? != '') THEN 1
                             ELSE 0
@@ -351,6 +379,7 @@ const artistController = {
                     [
                         artistId,
                         formattedData.bio,
+                        profileImageUrl,
                         formattedData.nic,
                         formattedData.genres,
                         formattedData.experience_years,
@@ -368,45 +397,56 @@ const artistController = {
             } else {
                 console.log('Artist found, updating profile');
                 // If artist exists, update profile
-                const updateResult = await executeQuery(
-                    `UPDATE artists SET 
+                let updateQuery = `UPDATE artists SET 
                      bio = ?, nic = ?, genres = ?, experience_years = ?, 
                      hourly_rate = ?, location = ?, website = ?, 
                      social_links = ?, updated_at = NOW(),
                      profile_complete = CASE 
                          WHEN (? IS NOT NULL AND ? != '' AND ? IS NOT NULL AND ? != '') THEN 1
                          ELSE 0
-                     END
-                     WHERE user_id = ?`,
-                    [
-                        formattedData.bio,
-                        formattedData.nic,
-                        formattedData.genres,
-                        formattedData.experience_years,
-                        formattedData.hourly_rate,
-                        formattedData.location,
-                        formattedData.website,
-                        formattedData.social_links,
-                        formattedData.bio,
-                        formattedData.bio,
-                        formattedData.nic,
-                        formattedData.nic,
-                        artistId
-                    ]
-                );
+                     END`;
+                
+                let updateParams = [
+                    formattedData.bio,
+                    formattedData.nic,
+                    formattedData.genres,
+                    formattedData.experience_years,
+                    formattedData.hourly_rate,
+                    formattedData.location,
+                    formattedData.website,
+                    formattedData.social_links,
+                    formattedData.bio,
+                    formattedData.bio,
+                    formattedData.nic,
+                    formattedData.nic
+                ];
+                
+                // Add profile image to update if provided
+                if (profileImageUrl) {
+                    updateQuery = updateQuery.replace('social_links = ?,', 'social_links = ?, profile_image = ?,');
+                    updateParams.splice(-4, 0, profileImageUrl); // Insert before the last 4 params
+                }
+                
+                updateQuery += ' WHERE user_id = ?';
+                updateParams.push(artistId);
+                
+                const updateResult = await executeQuery(updateQuery, updateParams);
                 console.log('Update result:', updateResult);
             }
 
             // Verify the update
             const verifyResult = await executeQuery(
-                'SELECT id, bio, nic, profile_complete FROM artists WHERE user_id = ?',
+                'SELECT id, bio, nic, profile_image, profile_complete FROM artists WHERE user_id = ?',
                 [artistId]
             );
             console.log('Verification after update:', verifyResult.data[0]);
 
             res.json({
                 success: true,
-                message: 'Profile updated successfully'
+                message: 'Profile updated successfully',
+                data: {
+                    profile_image: profileImageUrl
+                }
             });
             
         } catch (error) {
@@ -422,6 +462,12 @@ const artistController = {
         try {
             const userId = req.user.id;
             const { bio, nic, genres, experience_years, hourly_rate, location, website, social_links } = req.body;
+            
+            // Handle uploaded profile image
+            let profileImageUrl = null;
+            if (req.file) {
+                profileImageUrl = `/uploads/profile-images/${req.file.filename}`;
+            }
             
             // Check if artist profile already exists
             const existingResult = await executeQuery(
@@ -453,8 +499,8 @@ const artistController = {
             
             // Create artist profile with automatic profile_complete calculation
             const result = await executeQuery(
-                `INSERT INTO artists (user_id, bio, nic, genres, experience_years, hourly_rate, location, website, social_links, profile_complete) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                `INSERT INTO artists (user_id, bio, profile_image, nic, genres, experience_years, hourly_rate, location, website, social_links, profile_complete) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                      CASE 
                          WHEN (? IS NOT NULL AND ? != '' AND ? IS NOT NULL AND ? != '') THEN 1
                          ELSE 0
@@ -463,6 +509,7 @@ const artistController = {
                 [
                     userId, 
                     formattedData.bio,
+                    profileImageUrl,
                     formattedData.nic, 
                     formattedData.genres, 
                     formattedData.experience_years, 
@@ -487,7 +534,10 @@ const artistController = {
             
             res.json({
                 success: true,
-                message: 'Artist profile created successfully'
+                message: 'Artist profile created successfully',
+                data: {
+                    profile_image: profileImageUrl
+                }
             });
             
         } catch (error) {

@@ -3,14 +3,15 @@ const router = express.Router();
 const artistController = require('../controllers/artistController');
 const { authenticateToken, authorizeRoles, requireArtist } = require('../middlewares/auth');
 const { requireArtistVerification } = require('../middlewares/verification');
+const { uploadProfileImage } = require('../middlewares/upload');
 
 // Dashboard stats
 router.get('/dashboard/stats', authenticateToken, requireArtist, artistController.getDashboardStats);
 
 // Artist profile routes
 router.get('/profile', authenticateToken, requireArtist, artistController.getProfile);
-router.put('/profile', authenticateToken, requireArtist, artistController.updateProfile);
-router.post('/profile/complete', authenticateToken, requireArtist, artistController.completeProfile);
+router.put('/profile', authenticateToken, requireArtist, uploadProfileImage, artistController.updateProfile);
+router.post('/profile/complete', authenticateToken, requireArtist, uploadProfileImage, artistController.completeProfile);
 
 // Skills management
 router.get('/skills', authenticateToken, requireArtist, artistController.getSkills);

@@ -53,8 +53,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Static files middleware
+// Static files middleware - serve at both /uploads and /api/uploads for compatibility
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check route
 app.get('/health', (req, res) => {
