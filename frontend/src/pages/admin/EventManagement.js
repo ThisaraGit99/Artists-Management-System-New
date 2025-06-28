@@ -286,7 +286,12 @@ const EventManagement = () => {
                       <div>
                         <div className="fw-bold">{event.title}</div>
                         <small className="text-muted">
-                          <Badge bg="outline-secondary" className="border me-1">
+                          <Badge 
+                            bg="light" 
+                            text="dark" 
+                            className="border me-1"
+                            style={{ fontSize: '0.85em' }}
+                          >
                             {event.event_type}
                           </Badge>
                           {event.description?.substring(0, 50)}...
