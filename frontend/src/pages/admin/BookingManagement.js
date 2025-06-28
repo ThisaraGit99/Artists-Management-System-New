@@ -23,7 +23,6 @@ const BookingManagement = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDisputeModal, setShowDisputeModal] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   
@@ -33,7 +32,6 @@ const BookingManagement = () => {
   const [statusUpdateData, setStatusUpdateData] = useState({ status: '', notes: '' });
   const [paymentAction, setPaymentAction] = useState({ action: '', notes: '' });
   const [disputeData, setDisputeData] = useState({ resolution: '', notes: '' });
-  const [messageData, setMessageData] = useState({ recipient: '', message: '' });
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState(null);
 
@@ -120,12 +118,6 @@ const BookingManagement = () => {
     setShowDisputeModal(true);
   };
 
-  const openMessageModal = (booking, recipient) => {
-    setSelectedBooking(booking);
-    setMessageData({ recipient, message: '' });
-    setShowMessageModal(true);
-  };
-
   const openDeleteModal = (booking) => {
     setSelectedBooking(booking);
     setShowDeleteModal(true);
@@ -192,21 +184,6 @@ const BookingManagement = () => {
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    try {
-      setActionLoading(true);
-      await adminService.sendBookingMessage(selectedBooking.id, messageData.recipient, messageData.message);
-      setShowMessageModal(false);
-      showToast('Message sent successfully');
-    } catch (error) {
-      console.error('Send message error:', error);
-      showToast(error.message || 'Failed to send message', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleDeleteBooking = async () => {
     try {
       setActionLoading(true);
@@ -252,10 +229,10 @@ const BookingManagement = () => {
           </Button>
         </OverlayTrigger>
 
-        {/* Status Update - Always available */}
+        {/* Status Update */}
         <OverlayTrigger overlay={<Tooltip>Update Status</Tooltip>}>
           <Button
-            variant="outline-secondary"
+            variant="outline-info"
             size="sm"
             onClick={() => openStatusModal(booking)}
           >
@@ -263,20 +240,21 @@ const BookingManagement = () => {
           </Button>
         </OverlayTrigger>
 
-        {/* Payment Actions - Context dependent */}
-        {booking.payment_status === 'paid' && (
-          <OverlayTrigger overlay={<Tooltip>Release Payment to Artist</Tooltip>}>
+        {/* Payment Actions */}
+        {booking.status === 'completed' && !booking.payment_released && (
+          <OverlayTrigger overlay={<Tooltip>Release Payment</Tooltip>}>
             <Button
               variant="outline-success"
               size="sm"
               onClick={() => openPaymentModal(booking, 'release')}
             >
-              <i className="fas fa-hand-holding-usd"></i>
+              <i className="fas fa-dollar-sign"></i>
             </Button>
           </OverlayTrigger>
         )}
 
-        {booking.payment_status === 'paid' && (
+        {/* Refund Option */}
+        {booking.status !== 'refunded' && booking.payment_status === 'paid' && (
           <OverlayTrigger overlay={<Tooltip>Process Refund</Tooltip>}>
             <Button
               variant="outline-warning"
@@ -288,7 +266,7 @@ const BookingManagement = () => {
           </OverlayTrigger>
         )}
 
-        {/* Dispute Resolution - For disputed bookings */}
+        {/* Dispute Resolution */}
         {booking.status === 'disputed' && (
           <OverlayTrigger overlay={<Tooltip>Resolve Dispute</Tooltip>}>
             <Button
@@ -301,32 +279,7 @@ const BookingManagement = () => {
           </OverlayTrigger>
         )}
 
-        {/* Communication Actions */}
-        <Dropdown>
-          <OverlayTrigger overlay={<Tooltip>Send Message</Tooltip>}>
-            <Dropdown.Toggle variant="outline-info" size="sm">
-              <i className="fas fa-envelope"></i>
-            </Dropdown.Toggle>
-          </OverlayTrigger>
-          <Dropdown.Menu>
-            <Dropdown.Item onClick={() => openMessageModal(booking, 'artist')}>
-              <i className="fas fa-microphone me-2 text-primary"></i>
-              Message Artist
-            </Dropdown.Item>
-            <Dropdown.Item onClick={() => openMessageModal(booking, 'organizer')}>
-              <i className="fas fa-user me-2 text-success"></i>
-              Message Organizer
-            </Dropdown.Item>
-            <Dropdown.Divider />
-            <Dropdown.Item onClick={() => openMessageModal(booking, 'both')}>
-              <i className="fas fa-users me-2 text-info"></i>
-              Message Both Parties
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
-
-        {/* Delete Action - Only for cancelled/rejected bookings */}
-        {['cancelled', 'rejected'].includes(booking.status) && (
+        {/* Delete Booking */}
           <OverlayTrigger overlay={<Tooltip>Delete Booking</Tooltip>}>
             <Button
               variant="outline-danger"
@@ -336,7 +289,6 @@ const BookingManagement = () => {
               <i className="fas fa-trash"></i>
             </Button>
           </OverlayTrigger>
-        )}
       </div>
     );
   };
@@ -403,12 +355,12 @@ const BookingManagement = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container className="py-4">
       {/* Toast Notifications */}
       <ToastContainer position="top-end" className="p-3">
         {success && (
-          <Toast show={!!success} onClose={() => setSuccess(null)} bg="success" delay={5000} autohide>
-            <Toast.Header>
+          <Toast bg="success" onClose={() => setSuccess(null)} show={!!success} delay={3000} autohide>
+            <Toast.Header closeButton={false}>
               <i className="fas fa-check-circle me-2"></i>
               <strong className="me-auto">Success</strong>
             </Toast.Header>
@@ -420,32 +372,40 @@ const BookingManagement = () => {
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-6 fw-bold text-primary">
+          <h1 className="display-5 fw-bold text-primary">
             <i className="fas fa-calendar-check me-3"></i>
             Booking Management
           </h1>
-          <p className="lead text-muted">Advanced booking management with payment control and dispute resolution</p>
+          <p className="lead text-muted">Monitor and manage all artist bookings</p>
         </Col>
       </Row>
 
       {/* Error Alert */}
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
-          <i className="fas fa-exclamation-triangle me-2"></i>
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-4">
           {error}
         </Alert>
       )}
 
-      {/* Filters */}
-      <Card className="mb-4">
+      {/* Filter Section */}
+      <Card className="border-0 shadow-sm mb-4">
+        <Card.Header className="bg-white py-3">
+          <h5 className="mb-0">
+            <i className="fas fa-filter me-2"></i>
+            Filters & Search
+          </h5>
+        </Card.Header>
         <Card.Body>
-          <Row>
-            <Col md={4}>
               <Form onSubmit={handleSearch}>
+            <Row className="g-3">
+              {/* Search */}
+              <Col md={6} lg={4}>
+                <Form.Group>
+                  <Form.Label>Search Bookings</Form.Label>
                 <InputGroup>
                   <Form.Control
                     type="text"
-                    placeholder="🔍 Search bookings..."
+                      placeholder="Search by artist, event, or organizer..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -453,50 +413,87 @@ const BookingManagement = () => {
                     <i className="fas fa-search"></i>
                   </Button>
                 </InputGroup>
-              </Form>
+                </Form.Group>
             </Col>
-            <Col md={3}>
+
+              {/* Status Filter */}
+              <Col md={6} lg={3}>
+                <Form.Group>
+                  <Form.Label>Booking Status</Form.Label>
               <Form.Select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">📋 All Statuses</option>
-                <option value="pending">⏳ Pending</option>
-                <option value="confirmed">✅ Confirmed</option>
-                <option value="in_progress">🎵 In Progress</option>
-                <option value="completed">🎉 Completed</option>
-                <option value="cancelled">❌ Cancelled</option>
-                <option value="rejected">🚫 Rejected</option>
-                <option value="disputed">⚠️ Disputed</option>
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="disputed">Disputed</option>
               </Form.Select>
+                </Form.Group>
             </Col>
-            <Col md={3}>
+
+              {/* Sort By */}
+              <Col md={6} lg={3}>
+                <Form.Group>
+                  <Form.Label>Sort By</Form.Label>
               <Form.Select 
                 value={sortBy} 
                 onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="created_at">📅 Date Created</option>
-                <option value="performance_date">🎭 Performance Date</option>
-                <option value="event_title">🎪 Event Title</option>
-                <option value="status">📊 Status</option>
-                <option value="total_amount">💰 Amount</option>
+                    <option value="created_at">Date Created</option>
+                    <option value="event_date">Event Date</option>
+                    <option value="status">Status</option>
+                    <option value="amount">Amount</option>
               </Form.Select>
+                </Form.Group>
             </Col>
-            <Col md={2}>
+
+              {/* Sort Order */}
+              <Col md={6} lg={2}>
+                <Form.Group>
+                  <Form.Label>Order</Form.Label>
               <Form.Select 
                 value={sortOrder} 
                 onChange={(e) => setSortOrder(e.target.value)}
               >
-                <option value="DESC">⬇️ Newest First</option>
-                <option value="ASC">⬆️ Oldest First</option>
+                    <option value="DESC">Newest First</option>
+                    <option value="ASC">Oldest First</option>
               </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Action Buttons */}
+              <Col xs={12} className="text-end">
+                <Button
+                  variant="outline-secondary"
+                  className="me-2"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('all');
+                    setSortBy('created_at');
+                    setSortOrder('DESC');
+                  }}
+                >
+                  <i className="fas fa-undo me-1"></i>
+                  Reset Filters
+                </Button>
+                <Button 
+                  variant="primary" 
+                  type="submit"
+                >
+                  <i className="fas fa-search me-1"></i>
+                  Apply Filters
+                </Button>
             </Col>
           </Row>
+          </Form>
         </Card.Body>
       </Card>
 
       {/* Bookings Table */}
-      <Card>
+      <Card className="border-0 shadow-sm">
         <Card.Header className="bg-white">
           <Row className="align-items-center">
             <Col>
@@ -908,43 +905,6 @@ const BookingManagement = () => {
             </Button>
             <Button type="submit" variant="warning" disabled={actionLoading}>
               {actionLoading ? <Spinner animation="border" size="sm" /> : 'Resolve Dispute'}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
-
-      {/* Message Modal */}
-      <Modal show={showMessageModal} onHide={() => setShowMessageModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="fas fa-envelope me-2 text-info"></i>
-            Send Message to {messageData.recipient}
-          </Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleSendMessage}>
-          <Modal.Body>
-            <Alert variant="info">
-              <i className="fas fa-info-circle me-2"></i>
-              Message will be sent to: <strong>{messageData.recipient}</strong>
-            </Alert>
-            <Form.Group className="mb-3">
-              <Form.Label>Message</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={5}
-                value={messageData.message}
-                onChange={(e) => setMessageData(prev => ({ ...prev, message: e.target.value }))}
-                placeholder="Type your message here..."
-                required
-              />
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowMessageModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="info" disabled={actionLoading}>
-              {actionLoading ? <Spinner animation="border" size="sm" /> : 'Send Message'}
             </Button>
           </Modal.Footer>
         </Form>

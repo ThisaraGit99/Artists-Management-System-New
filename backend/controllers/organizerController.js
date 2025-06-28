@@ -236,7 +236,7 @@ const organizerController = {
                     break;
                 case 'newest':
                 default:
-                    query += ' ORDER BY b.created_at DESC';
+            query += ' ORDER BY b.created_at DESC';
             }
 
             // Get total count for pagination

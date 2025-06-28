@@ -266,10 +266,10 @@ const EventManagement = () => {
       if (isNaN(date.getTime())) return 'Invalid Date';
       
       return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
     } catch (error) {
       console.error('Date formatting error:', error);
       return 'Invalid Date';
@@ -424,84 +424,38 @@ const EventManagement = () => {
                 <i className="fas fa-filter me-1"></i>
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
               </Button>
-              <Button 
-                variant="primary" 
-                onClick={() => setShowCreateModal(true)}
-              >
-                <i className="fas fa-plus me-2"></i>
-                Create Event
-              </Button>
+            <Button 
+              variant="primary" 
+              onClick={() => setShowCreateModal(true)}
+            >
+              <i className="fas fa-plus me-2"></i>
+              Create Event
+            </Button>
             </div>
           </div>
-        </Col>
-      </Row>
-
-      {/* Quick Stats */}
-      <Row className="mb-4 mx-0">
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body className="text-center">
-              <i className="fas fa-calendar-check fa-2x text-primary mb-2"></i>
-              <h3 className="fw-bold">{filteredEvents.length}</h3>
-              <small className="text-muted">Total Events</small>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body className="text-center">
-              <i className="fas fa-clock fa-2x text-warning mb-2"></i>
-              <h3 className="fw-bold">
-                {filteredEvents.filter(e => e.status === 'published').length}
-              </h3>
-              <small className="text-muted">Published Events</small>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body className="text-center">
-              <i className="fas fa-users fa-2x text-success mb-2"></i>
-              <h3 className="fw-bold">
-                {filteredEvents.reduce((sum, event) => sum + (event.application_count || 0), 0)}
-              </h3>
-              <small className="text-muted">Total Applications</small>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body className="text-center">
-              <i className="fas fa-dollar-sign fa-2x text-info mb-2"></i>
-              <h3 className="fw-bold">
-                {formatCurrency(filteredEvents.reduce((sum, event) => sum + (event.budget || 0), 0))}
-              </h3>
-              <small className="text-muted">Total Budget</small>
-            </Card.Body>
-          </Card>
         </Col>
       </Row>
 
       {/* Filter Section */}
       {showFilters && (
         <Card className="mb-4 mx-0">
-          <Card.Header className="bg-light">
-            <div className="d-flex justify-content-between align-items-center">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
               <h5 className="mb-0">
                 <i className="fas fa-sliders-h me-2"></i>
-                Filter Events
+              Filter Events
               </h5>
-              <Button 
+            <Button 
                 variant="link" 
                 className="text-muted p-0" 
                 onClick={clearFilters}
-              >
-                <i className="fas fa-times me-1"></i>
+            >
+              <i className="fas fa-times me-1"></i>
                 Clear All
-              </Button>
-            </div>
-          </Card.Header>
-          <Card.Body>
+            </Button>
+          </div>
+        </Card.Header>
+        <Card.Body>
             <Row className="g-3">
               {/* Search */}
               <Col md={12}>
@@ -512,39 +466,39 @@ const EventManagement = () => {
                       <i className="fas fa-search"></i>
                     </InputGroup.Text>
                     <Form.Control
-                      type="text"
+                type="text"
                       placeholder="Search by event title, description, or venue..."
                       value={filters.searchTerm}
                       onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-                    />
+              />
                   </InputGroup>
                 </Form.Group>
-              </Col>
+            </Col>
 
               {/* Event Type */}
-              <Col md={4}>
+              <Col md={6}>
                 <Form.Group>
                   <Form.Label>Event Type</Form.Label>
                   <Form.Select
                     value={filters.eventType}
                     onChange={(e) => handleFilterChange('eventType', e.target.value)}
-                  >
+              >
                     <option value="all">All Event Types</option>
                     {getEventTypes().map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
+                  <option key={type} value={type}>{type}</option>
+                ))}
                   </Form.Select>
                 </Form.Group>
-              </Col>
+            </Col>
 
               {/* Status */}
-              <Col md={4}>
+              <Col md={6}>
                 <Form.Group>
                   <Form.Label>Status</Form.Label>
                   <Form.Select
                     value={filters.status}
                     onChange={(e) => handleFilterChange('status', e.target.value)}
-                  >
+              >
                     <option value="all">All Status</option>
                     <option value="planning">Planning</option>
                     <option value="published">Published</option>
@@ -553,112 +507,10 @@ const EventManagement = () => {
                     <option value="cancelled">Cancelled</option>
                   </Form.Select>
                 </Form.Group>
-              </Col>
-
-              {/* Applications Filter */}
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Applications</Form.Label>
-                  <Form.Select
-                    value={filters.hasApplications}
-                    onChange={(e) => handleFilterChange('hasApplications', e.target.value)}
-                  >
-                    <option value="all">All Events</option>
-                    <option value="yes">Has Applications</option>
-                    <option value="no">No Applications</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-
-              {/* Venue Search */}
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Venue</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Search by venue name, city, or state..."
-                    value={filters.venue}
-                    onChange={(e) => handleFilterChange('venue', e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
-
-              {/* Sort By */}
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Sort By</Form.Label>
-                  <Form.Select
-                    value={filters.sortBy}
-                    onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                  >
-                    <option value="newest">Newest First</option>
-                    <option value="date_asc">Event Date (Ascending)</option>
-                    <option value="date_desc">Event Date (Descending)</option>
-                    <option value="budget_high">Budget (High to Low)</option>
-                    <option value="budget_low">Budget (Low to High)</option>
-                    <option value="applications">Most Applications</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-
-              {/* Budget Range */}
-              <Col md={3}>
-                <Form.Group>
-                  <Form.Label>Min Budget</Form.Label>
-                  <InputGroup>
-                    <InputGroup.Text>$</InputGroup.Text>
-                    <Form.Control
-                      type="number"
-                      placeholder="0"
-                      value={filters.budgetMin}
-                      onChange={(e) => handleFilterChange('budgetMin', e.target.value)}
-                      min="0"
-                    />
-                  </InputGroup>
-                </Form.Group>
-              </Col>
-
-              <Col md={3}>
-                <Form.Group>
-                  <Form.Label>Max Budget</Form.Label>
-                  <InputGroup>
-                    <InputGroup.Text>$</InputGroup.Text>
-                    <Form.Control
-                      type="number"
-                      placeholder="Any"
-                      value={filters.budgetMax}
-                      onChange={(e) => handleFilterChange('budgetMax', e.target.value)}
-                      min="0"
-                    />
-                  </InputGroup>
-                </Form.Group>
-              </Col>
-
-              {/* Date Range */}
-              <Col md={3}>
-                <Form.Group>
-                  <Form.Label>From Date</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={3}>
-                <Form.Group>
-                  <Form.Label>To Date</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
       )}
 
       {/* Events List */}
@@ -694,8 +546,8 @@ const EventManagement = () => {
                   : "Try adjusting your filters to see more events"}
               </p>
               {events.length === 0 && (
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   onClick={() => setShowCreateModal(true)}
                 >
                   <i className="fas fa-plus me-2"></i>
@@ -721,12 +573,12 @@ const EventManagement = () => {
                     <tr key={event.id}>
                       <td>
                         <div className="d-flex align-items-center">
-                          <div>
+                        <div>
                             <h6 className="mb-1">{event.title}</h6>
-                            <small className="text-muted">
+                          <small className="text-muted">
                               <i className="fas fa-tag me-1"></i>
                               {event.event_type}
-                            </small>
+                          </small>
                           </div>
                         </div>
                       </td>

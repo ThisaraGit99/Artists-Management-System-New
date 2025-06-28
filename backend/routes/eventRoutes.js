@@ -10,9 +10,9 @@ router.get('/:eventId', authenticateToken, authorizeRoles('organizer', 'admin'),
 router.put('/:eventId', authenticateToken, requireOrganizer, eventController.updateEvent);
 router.delete('/:eventId', authenticateToken, requireOrganizer, eventController.deleteEvent);
 
-// TEMPORARY: Public routes for artists to browse events (AUTH REMOVED FOR TESTING)
-router.get('/browse/all', eventController.browseEvents);
-router.get('/browse/:eventId', eventController.getPublicEventDetails);
+// Event browsing routes for verified artists only
+router.get('/browse/all', authenticateToken, authorizeRoles('artist', 'admin'), eventController.browseEvents);
+router.get('/browse/:eventId', authenticateToken, authorizeRoles('artist', 'admin'), eventController.getPublicEventDetails);
 
 // Event statistics
 router.get('/:eventId/stats', authenticateToken, requireOrganizer, eventController.getEventStats);

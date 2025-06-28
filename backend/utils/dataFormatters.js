@@ -79,6 +79,11 @@ const formatArtistProfile = (artistData) => {
 
 // Format data for database storage (ensures proper JSON strings)
 const formatForDatabase = (data) => {
+    console.log('Formatting data for database, input:', {
+        nic: data.nic,
+        bio: data.bio?.substring(0, 20) + '...' // Log just the start of bio for brevity
+    });
+    
     const formatted = { ...data };
     
     // Convert arrays/objects to JSON strings for database storage
@@ -89,6 +94,11 @@ const formatForDatabase = (data) => {
     if (formatted.social_links && typeof formatted.social_links === 'object') {
         formatted.social_links = JSON.stringify(formatted.social_links);
     }
+    
+    console.log('Formatted data output:', {
+        nic: formatted.nic,
+        bio: formatted.bio?.substring(0, 20) + '...' // Log just the start of bio for brevity
+    });
     
     return formatted;
 };

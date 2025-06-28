@@ -4,6 +4,7 @@ import { Form, Button, Row, Col, Alert, Card } from 'react-bootstrap';
 const ProfileForm = ({ profile, onSubmit }) => {
     const [formData, setFormData] = useState({
         bio: '',
+        nic: '',
         genres: [],
         experience_years: '',
         hourly_rate: '',
@@ -46,7 +47,8 @@ const ProfileForm = ({ profile, onSubmit }) => {
 
             setFormData({
                 bio: profile.bio || '',
-                genres: safeJsonParse(profile.genres, []),
+                nic: profile.nic || '',
+                genres: Array.isArray(profile.genres) ? profile.genres : [],
                 experience_years: profile.experience_years || '',
                 hourly_rate: profile.hourly_rate || '',
                 location: profile.location || '',
@@ -120,6 +122,12 @@ const ProfileForm = ({ profile, onSubmit }) => {
             newErrors.bio = 'Bio is required';
         } else if (formData.bio.length < 50) {
             newErrors.bio = 'Bio should be at least 50 characters';
+        }
+
+        if (!formData.nic.trim()) {
+            newErrors.nic = 'NIC is required';
+        } else if (formData.nic.length < 10 || formData.nic.length > 20) {
+            newErrors.nic = 'NIC should be between 10 and 20 characters';
         }
 
         if (formData.genres.length === 0) {
@@ -206,6 +214,28 @@ const ProfileForm = ({ profile, onSubmit }) => {
                             </Form.Control.Feedback>
                             <Form.Text className="text-muted">
                                 {formData.bio.length}/500 characters (minimum 50)
+                            </Form.Text>
+                        </Form.Group>
+                    </Col>
+                </Row>
+
+                <Row>
+                    <Col md={12}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>NIC (National Identity Card) <span className="text-danger">*</span></Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nic"
+                                value={formData.nic}
+                                onChange={handleInputChange}
+                                placeholder="Enter your NIC number (e.g., 123456789V or 199012345678)"
+                                isInvalid={!!errors.nic}
+                            />
+                            <Form.Control.Feedback type="invalid">
+                                {errors.nic}
+                            </Form.Control.Feedback>
+                            <Form.Text className="text-muted">
+                                Your National Identity Card number for verification purposes
                             </Form.Text>
                         </Form.Group>
                     </Col>

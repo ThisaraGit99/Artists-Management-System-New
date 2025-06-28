@@ -26,7 +26,31 @@ const artistService = {
 
     // Profile Management
     getProfile: () => artistAPI.get('/profile'),
-    updateProfile: (data) => artistAPI.put('/profile', data),
+    updateProfile: async (data) => {
+        console.log('Sending profile update request:', {
+            nic: data.nic,
+            bio: data.bio?.substring(0, 20) + '...',
+            genres: data.genres
+        });
+        
+        try {
+            const response = await artistAPI.put('/profile', data);
+            console.log('Profile update response:', response.data);
+            
+            // Immediately verify the update
+            const verifyResponse = await artistAPI.get('/profile');
+            console.log('Profile after update:', {
+                nic: verifyResponse.data.data?.nic,
+                bio: verifyResponse.data.data?.bio?.substring(0, 20) + '...',
+                genres: verifyResponse.data.data?.genres
+            });
+            
+            return response;
+        } catch (error) {
+            console.error('Profile update error:', error.response?.data || error.message);
+            throw error;
+        }
+    },
     completeProfile: (data) => artistAPI.post('/profile/complete', data),
 
     // Skills Management

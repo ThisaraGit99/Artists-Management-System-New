@@ -176,15 +176,15 @@ const SystemSettings = () => {
   const categorizedSettings = categorizeSettings();
 
   return (
-    <Container fluid className="py-4">
+    <Container className="py-4">
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-6 fw-bold text-primary">
+          <h1 className="display-5 fw-bold text-primary">
             <i className="fas fa-cog me-3"></i>
             System Settings
           </h1>
-          <p className="lead text-muted">Configure platform settings and preferences</p>
+          <p className="lead text-muted">Configure system-wide settings and preferences</p>
         </Col>
         <Col xs="auto">
           {Object.keys(pendingChanges).length > 0 && (
@@ -202,7 +202,7 @@ const SystemSettings = () => {
       </Row>
 
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-4">
           {error}
         </Alert>
       )}
@@ -213,204 +213,231 @@ const SystemSettings = () => {
         </Alert>
       )}
 
-      {/* Platform Settings */}
-      {categorizedSettings.platform && Object.keys(categorizedSettings.platform).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-primary text-white">
-            <h5 className="mb-0">
-              <i className="fas fa-building me-2"></i>
-              Platform Settings
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.platform).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+      {/* Settings Sections */}
+      <Row>
+        <Col lg={6} className="mb-4">
+          <Card className="border-0 shadow-sm h-100">
+            <Card.Header className="bg-white border-0">
+              <h5 className="fw-bold mb-0">
+                <i className="fas fa-sliders-h me-2"></i>
+                General Settings
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              {/* Platform Settings */}
+              {categorizedSettings.platform && Object.keys(categorizedSettings.platform).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-primary text-white">
+                    <h5 className="mb-0">
+                      <i className="fas fa-building me-2"></i>
+                      Platform Settings
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.platform).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
 
-      {/* Business Settings */}
-      {categorizedSettings.business && Object.keys(categorizedSettings.business).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-success text-white">
-            <h5 className="mb-0">
-              <i className="fas fa-chart-line me-2"></i>
-              Business Settings
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.business).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+              {/* Business Settings */}
+              {categorizedSettings.business && Object.keys(categorizedSettings.business).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-success text-white">
+                    <h5 className="mb-0">
+                      <i className="fas fa-chart-line me-2"></i>
+                      Business Settings
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.business).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
 
-      {/* User Settings */}
-      {categorizedSettings.user && Object.keys(categorizedSettings.user).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-info text-white">
-            <h5 className="mb-0">
-              <i className="fas fa-users me-2"></i>
-              User Settings
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.user).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+              {/* User Settings */}
+              {categorizedSettings.user && Object.keys(categorizedSettings.user).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-info text-white">
+                    <h5 className="mb-0">
+                      <i className="fas fa-users me-2"></i>
+                      User Settings
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.user).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
 
-      {/* File Settings */}
-      {categorizedSettings.files && Object.keys(categorizedSettings.files).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-warning text-dark">
-            <h5 className="mb-0">
-              <i className="fas fa-file-upload me-2"></i>
-              File & Upload Settings
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.files).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+              {/* File Settings */}
+              {categorizedSettings.files && Object.keys(categorizedSettings.files).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-warning text-dark">
+                    <h5 className="mb-0">
+                      <i className="fas fa-file-upload me-2"></i>
+                      File & Upload Settings
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.files).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
 
-      {/* System Settings */}
-      {categorizedSettings.system && Object.keys(categorizedSettings.system).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-danger text-white">
-            <h5 className="mb-0">
-              <i className="fas fa-server me-2"></i>
-              System Control
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.system).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                      {key === 'maintenance_mode' && setting.value && (
-                        <Badge bg="danger" className="ms-2">ACTIVE</Badge>
-                      )}
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+              {/* System Settings */}
+              {categorizedSettings.system && Object.keys(categorizedSettings.system).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-danger text-white">
+                    <h5 className="mb-0">
+                      <i className="fas fa-server me-2"></i>
+                      System Control
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.system).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                              {key === 'maintenance_mode' && setting.value && (
+                                <Badge bg="danger" className="ms-2">ACTIVE</Badge>
+                              )}
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
 
-      {/* Legal Settings */}
-      {categorizedSettings.legal && Object.keys(categorizedSettings.legal).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-dark text-white">
-            <h5 className="mb-0">
-              <i className="fas fa-gavel me-2"></i>
-              Legal & Compliance
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.legal).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+        <Col lg={6} className="mb-4">
+          <Card className="border-0 shadow-sm h-100">
+            <Card.Header className="bg-white border-0">
+              <h5 className="fw-bold mb-0">
+                <i className="fas fa-gavel me-2"></i>
+                Legal & Compliance
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              {/* Legal Settings */}
+              {categorizedSettings.legal && Object.keys(categorizedSettings.legal).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-dark text-white">
+                    <h5 className="mb-0">
+                      <i className="fas fa-gavel me-2"></i>
+                      Legal & Compliance
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.legal).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
 
-      {/* Other Settings */}
-      {categorizedSettings.other && Object.keys(categorizedSettings.other).length > 0 && (
-        <Card className="mb-4">
-          <Card.Header className="bg-secondary text-white">
-            <h5 className="mb-0">
-              <i className="fas fa-ellipsis-h me-2"></i>
-              Other Settings
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              {Object.entries(categorizedSettings.other).map(([key, setting]) => (
-                <Col md={6} key={key} className="mb-3">
-                  <Form.Group>
-                    <Form.Label className="fw-bold">
-                      {getSettingDisplayName(key)}
-                      <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
-                    </Form.Label>
-                    {renderSettingInput(key, setting)}
-                    <Form.Text className="text-muted">{setting.description}</Form.Text>
-                  </Form.Group>
-                </Col>
-              ))}
-            </Row>
-          </Card.Body>
-        </Card>
-      )}
+              {/* Other Settings */}
+              {categorizedSettings.other && Object.keys(categorizedSettings.other).length > 0 && (
+                <Card className="mb-4">
+                  <Card.Header className="bg-secondary text-white">
+                    <h5 className="mb-0">
+                      <i className="fas fa-ellipsis-h me-2"></i>
+                      Other Settings
+                    </h5>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      {Object.entries(categorizedSettings.other).map(([key, setting]) => (
+                        <Col md={6} key={key} className="mb-3">
+                          <Form.Group>
+                            <Form.Label className="fw-bold">
+                              {getSettingDisplayName(key)}
+                              <Badge bg="secondary" className="ms-2 text-capitalize">{setting.type}</Badge>
+                            </Form.Label>
+                            {renderSettingInput(key, setting)}
+                            <Form.Text className="text-muted">{setting.description}</Form.Text>
+                          </Form.Group>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card.Body>
+                </Card>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       {/* Save Confirmation Modal */}
       <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>

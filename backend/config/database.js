@@ -35,7 +35,21 @@ const testConnection = async () => {
 // Execute query with error handling
 const executeQuery = async (query, params = []) => {
     try {
+        // Log the query and parameters
+        console.log('Executing SQL Query:', {
+            query,
+            params: params.map(p => p === null ? 'NULL' : p.toString())
+        });
+        
         const [results] = await pool.execute(query, params);
+        
+        // Log the results
+        console.log('Query Results:', {
+            affectedRows: results.affectedRows,
+            insertId: results.insertId,
+            changedRows: results.changedRows
+        });
+        
         return { success: true, data: results };
     } catch (error) {
         console.error('Database query error:', error.message);

@@ -104,37 +104,35 @@ const VerificationManagement = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container className="py-4">
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-6 fw-bold text-primary">
+          <h1 className="display-5 fw-bold text-primary">
             <i className="fas fa-check-circle me-3"></i>
             Verification Management
           </h1>
-          <p className="lead text-muted">Review and approve user verification requests</p>
-        </Col>
-        <Col xs="auto">
-          <Button 
-            variant="outline-primary" 
-            onClick={fetchVerificationRequests}
-            disabled={loading}
-          >
-            <i className="fas fa-sync-alt me-2"></i>
-            Refresh
-          </Button>
+          <p className="lead text-muted">Review and manage user verification requests</p>
         </Col>
       </Row>
 
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
-          <i className="fas fa-exclamation-triangle me-2"></i>
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-4">
           {error}
         </Alert>
       )}
 
-      {/* Verification Requests */}
-      <Card>
+      {/* Filters */}
+      <Card className="border-0 shadow-sm mb-4">
+        <Card.Body>
+          <Row>
+            {/* Keep existing filter content */}
+          </Row>
+        </Card.Body>
+      </Card>
+
+      {/* Verification Requests Table */}
+      <Card className="border-0 shadow-sm">
         <Card.Header className="bg-light">
           <h5 className="mb-0">
             <i className="fas fa-clock me-2 text-warning"></i>

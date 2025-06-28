@@ -9,7 +9,7 @@ router.get('/dashboard/stats', authenticateToken, requireArtist, artistControlle
 
 // Artist profile routes
 router.get('/profile', authenticateToken, requireArtist, artistController.getProfile);
-router.put('/profile', authenticateToken, requireArtist, requireArtistVerification, artistController.updateProfile);
+router.put('/profile', authenticateToken, requireArtist, artistController.updateProfile);
 router.post('/profile/complete', authenticateToken, requireArtist, artistController.completeProfile);
 
 // Skills management

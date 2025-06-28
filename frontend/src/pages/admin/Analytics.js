@@ -71,20 +71,20 @@ const Analytics = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container className="py-4">
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-6 fw-bold text-primary">
-            <i className="fas fa-chart-bar me-3"></i>
+          <h1 className="display-5 fw-bold text-primary">
+            <i className="fas fa-chart-line me-3"></i>
             Analytics Dashboard
           </h1>
-          <p className="lead text-muted">Platform insights and performance metrics</p>
+          <p className="lead text-muted">View system statistics and performance metrics</p>
         </Col>
       </Row>
 
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-4">
           {error}
         </Alert>
       )}
@@ -122,7 +122,7 @@ const Analytics = () => {
       {/* Platform Overview */}
       {analyticsData && (
         <Row className="mb-4">
-          <Col md={3}>
+          <Col md={3} className="mb-3">
             <Card className="border-0 shadow-sm h-100">
               <Card.Body className="text-center">
                 <i className="fas fa-users fa-3x text-primary mb-3"></i>
@@ -134,7 +134,7 @@ const Analytics = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={3}>
+          <Col md={3} className="mb-3">
             <Card className="border-0 shadow-sm h-100">
               <Card.Body className="text-center">
                 <i className="fas fa-building fa-3x text-info mb-3"></i>
@@ -146,7 +146,7 @@ const Analytics = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={3}>
+          <Col md={3} className="mb-3">
             <Card className="border-0 shadow-sm h-100">
               <Card.Body className="text-center">
                 <i className="fas fa-calendar-check fa-3x text-success mb-3"></i>
@@ -158,7 +158,7 @@ const Analytics = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={3}>
+          <Col md={3} className="mb-3">
             <Card className="border-0 shadow-sm h-100">
               <Card.Body className="text-center">
                 <i className="fas fa-dollar-sign fa-3x text-warning mb-3"></i>

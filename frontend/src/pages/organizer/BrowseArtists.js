@@ -238,12 +238,12 @@ const BrowseArtists = () => {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h1 className="display-5 fw-bold text-primary mb-2">
-                <i className="fas fa-search me-3"></i>
-                Find Artists
-              </h1>
-              <p className="lead text-muted">
-                Discover talented artists for your events
-              </p>
+            <i className="fas fa-search me-3"></i>
+            Find Artists
+          </h1>
+          <p className="lead text-muted">
+            Discover talented artists for your events
+          </p>
             </div>
             <Button 
               variant="outline-primary"
@@ -322,10 +322,10 @@ const BrowseArtists = () => {
               </Button>
             </div>
           </Card.Header>
-          <Card.Body>
-            <Row className="g-3">
+            <Card.Body>
+              <Row className="g-3">
               {/* Search Bar - Moved inside filters */}
-              <Col md={12}>
+                <Col md={12}>
                 <Form.Group>
                   <Form.Label>Search Artists</Form.Label>
                   <InputGroup>
@@ -348,7 +348,7 @@ const BrowseArtists = () => {
                     )}
                   </InputGroup>
                 </Form.Group>
-              </Col>
+                </Col>
 
               {/* First Row */}
               <Col md={4}>
@@ -376,7 +376,7 @@ const BrowseArtists = () => {
                     onChange={(e) => handleFilterChange('city', e.target.value)}
                   />
                 </Form.Group>
-              </Col>
+                </Col>
 
               <Col md={4}>
                 <Form.Group>
@@ -388,7 +388,7 @@ const BrowseArtists = () => {
                     onChange={(e) => handleFilterChange('state', e.target.value)}
                   />
                 </Form.Group>
-              </Col>
+                </Col>
 
               {/* Second Row */}
               <Col md={3}>
@@ -402,7 +402,7 @@ const BrowseArtists = () => {
                     min="0"
                   />
                 </Form.Group>
-              </Col>
+                </Col>
 
               <Col md={3}>
                 <Form.Group>
@@ -415,7 +415,7 @@ const BrowseArtists = () => {
                     min="0"
                   />
                 </Form.Group>
-              </Col>
+                </Col>
 
               <Col md={3}>
                 <Form.Group>
@@ -489,7 +489,7 @@ const BrowseArtists = () => {
                     <option value="name">Name (A-Z)</option>
                   </Form.Select>
                 </Form.Group>
-              </Col>
+                </Col>
 
               {/* Skills Section */}
               <Col md={12}>
@@ -513,23 +513,23 @@ const BrowseArtists = () => {
                     ))}
                   </div>
                 </Form.Group>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
       )}
 
       {/* Artists Grid */}
       <Row>
-        {filteredArtists.length === 0 ? (
+      {filteredArtists.length === 0 ? (
           <Col className="text-center py-5">
             <i className="fas fa-user-slash fa-3x text-muted mb-3"></i>
             <h5>No artists found</h5>
-            <p className="text-muted">
+                <p className="text-muted">
               Try adjusting your filters to see more results
-            </p>
+                </p>
           </Col>
-        ) : (
+      ) : (
           filteredArtists.map(artist => (
             <Col key={artist.id} md={4} className="mb-4">
               <ArtistCard 
@@ -539,14 +539,14 @@ const BrowseArtists = () => {
             </Col>
           ))
         )}
-      </Row>
+        </Row>
 
       {/* Artist Details Modal */}
-      <ArtistDetailsModal
-        show={showDetailsModal}
-        onHide={handleCloseModal}
+        <ArtistDetailsModal
+          show={showDetailsModal}
+          onHide={handleCloseModal}
         artist={selectedArtist}
-      />
+        />
     </Container>
   );
 };

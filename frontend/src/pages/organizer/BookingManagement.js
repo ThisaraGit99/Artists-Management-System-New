@@ -420,7 +420,7 @@ const OrganizerBookingManagement = () => {
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h2 className="mb-0">
               <i className="fas fa-calendar-check me-2 text-primary"></i>
-              My Booking Requests
+            My Booking Requests
             </h2>
             <div>
               <Button 
@@ -466,17 +466,17 @@ const OrganizerBookingManagement = () => {
                   <Col md={3}>
                     <Form.Group>
                       <Form.Label>Booking Status</Form.Label>
-                      <Form.Select
-                        value={filters.status}
+          <Form.Select
+            value={filters.status}
                         onChange={(e) => handleFilterChange('status', e.target.value)}
-                      >
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="completed">Completed</option>
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                         <option value="disputed">Disputed</option>
-                      </Form.Select>
+          </Form.Select>
                     </Form.Group>
                   </Col>
 
@@ -569,8 +569,8 @@ const OrganizerBookingManagement = () => {
                         <option value="50">50 per page</option>
                       </Form.Select>
                     </Form.Group>
-                  </Col>
-                </Row>
+        </Col>
+      </Row>
               </Card.Body>
             </Card>
           )}
@@ -578,7 +578,7 @@ const OrganizerBookingManagement = () => {
           {/* Bookings Summary */}
           <Card className="mb-4 shadow-sm mx-0">
             <Card.Body>
-              <Row>
+      <Row>
                 <Col sm={6} md={3} className="mb-3 mb-md-0">
                   <div className="text-center">
                     <h3 className="text-primary mb-1">
@@ -649,52 +649,52 @@ const OrganizerBookingManagement = () => {
               ) : (
                 <div className="table-responsive">
                   <Table hover className="mb-0">
-                    <thead className="table-light">
-                      <tr>
+                  <thead className="table-light">
+                    <tr>
                         <th className="px-4">Artist Details</th>
-                        <th>Event</th>
-                        <th>Date & Time</th>
+                      <th>Event</th>
+                      <th>Date & Time</th>
                         <th>Payment</th>
-                        <th>Status</th>
+                      <th>Status</th>
                         <th className="px-4">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                    </tr>
+                  </thead>
+                  <tbody>
                       {bookings.map(booking => (
-                        <tr key={booking.id}>
+                      <tr key={booking.id}>
                           <td className="px-4">
                             <div className="d-flex align-items-center">
-                              <div>
+                          <div>
                                 <h6 className="mb-1">{booking.artist_name}</h6>
-                                <small className="text-muted">
+                              <small className="text-muted">
                                   <i className="fas fa-tag me-1"></i>
                                   {booking.artist_type || 'Artist'}
-                                </small>
+                              </small>
                               </div>
-                            </div>
-                          </td>
-                          <td>
-                            <div>
+                          </div>
+                        </td>
+                        <td>
+                          <div>
                               <h6 className="mb-1">{booking.event_name}</h6>
                               <small className="text-muted">
                                 <i className="fas fa-map-marker-alt me-1"></i>
                                 {booking.venue_name || 'Venue TBD'}
                               </small>
-                            </div>
-                          </td>
-                          <td>
-                            <div>
+                          </div>
+                        </td>
+                        <td>
+                          <div>
                               <div className="mb-1">
                                 <i className="fas fa-calendar-day me-1 text-muted"></i>
                                 {formatDateTime(booking.event_date, booking.start_time)}
                               </div>
-                              <small className="text-muted">
+                            <small className="text-muted">
                                 <i className="fas fa-clock me-1"></i>
                                 {booking.duration} hours
-                              </small>
-                            </div>
-                          </td>
-                          <td>
+                            </small>
+                          </div>
+                        </td>
+                        <td>
                             <div>
                               <h6 className="mb-1 text-success">
                                 <i className="fas fa-dollar-sign me-1"></i>
@@ -707,8 +707,8 @@ const OrganizerBookingManagement = () => {
                                 {booking.payment_status}
                               </Badge>
                             </div>
-                          </td>
-                          <td>
+                        </td>
+                        <td>
                             <Badge 
                               bg={getStatusBadge(booking.status)}
                               className="text-dark"
@@ -717,269 +717,269 @@ const OrganizerBookingManagement = () => {
                             </Badge>
                           </td>
                           <td className="px-4">
-                            <div className="d-flex gap-1">
+                          <div className="d-flex gap-1">
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() => handleViewDetails(booking)}
+                              title="View Details"
+                            >
+                              <i className="fas fa-eye"></i>
+                            </Button>
+                            
+                            {booking.status === 'confirmed' && booking.payment_status === 'pending' && (
                               <Button
-                                variant="outline-primary"
+                                variant="outline-success"
                                 size="sm"
-                                onClick={() => handleViewDetails(booking)}
-                                title="View Details"
+                                onClick={() => handleMakePayment(booking.id)}
+                                title="Make Payment"
                               >
-                                <i className="fas fa-eye"></i>
+                                <i className="fas fa-credit-card"></i>
                               </Button>
-                              
-                              {booking.status === 'confirmed' && booking.payment_status === 'pending' && (
-                                <Button
-                                  variant="outline-success"
-                                  size="sm"
-                                  onClick={() => handleMakePayment(booking.id)}
-                                  title="Make Payment"
-                                >
-                                  <i className="fas fa-credit-card"></i>
-                                </Button>
-                              )}
-                              
-                              {booking.payment_status === 'paid' && 
-                               booking.payment_status !== 'released' && 
-                               !['not_delivered', 'disputed', 'under_investigation'].includes(booking.status) && (
-                                <Button
-                                  variant="outline-success"
-                                  size="sm"
-                                  onClick={() => handleConfirmPerformance(booking.id)}
-                                  title="Confirm Performance"
-                                >
-                                  <i className="fas fa-check"></i>
-                                </Button>
-                              )}
-                              
-                              {booking.payment_status === 'paid' && 
-                               booking.payment_status !== 'released' &&
-                               !['not_delivered', 'disputed', 'under_investigation', 'refunded'].includes(booking.status) && (
-                                <Button
-                                  variant="outline-warning"
-                                  size="sm"
-                                  onClick={() => handleReportNonDelivery(booking)}
-                                  title="Report Non-Delivery"
-                                >
-                                  <i className="fas fa-exclamation-triangle"></i>
-                                </Button>
-                              )}
-                              
-                              {canCancelBooking(booking) && (
-                                <Button
-                                  variant="outline-danger"
-                                  size="sm"
-                                  onClick={() => handleCancelBooking(booking)}
-                                  title="Cancel Booking"
-                                >
-                                  <i className="fas fa-times"></i>
-                                </Button>
-                              )}
-                              
-                              {booking.status === 'completed' && (
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  className="me-2"
-                                  onClick={() => handleRateArtist(booking)}
-                                >
-                                  Rate Artist
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
+                            )}
+                            
+                            {booking.payment_status === 'paid' && 
+                             booking.payment_status !== 'released' && 
+                             !['not_delivered', 'disputed', 'under_investigation'].includes(booking.status) && (
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={() => handleConfirmPerformance(booking.id)}
+                                title="Confirm Performance"
+                              >
+                                <i className="fas fa-check"></i>
+                              </Button>
+                            )}
+                            
+                            {booking.payment_status === 'paid' && 
+                             booking.payment_status !== 'released' &&
+                             !['not_delivered', 'disputed', 'under_investigation', 'refunded'].includes(booking.status) && (
+                              <Button
+                                variant="outline-warning"
+                                size="sm"
+                                onClick={() => handleReportNonDelivery(booking)}
+                                title="Report Non-Delivery"
+                              >
+                                <i className="fas fa-exclamation-triangle"></i>
+                              </Button>
+                            )}
+                            
+                            {canCancelBooking(booking) && (
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => handleCancelBooking(booking)}
+                                title="Cancel Booking"
+                              >
+                                <i className="fas fa-times"></i>
+                              </Button>
+                            )}
+                            
+                            {booking.status === 'completed' && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                className="me-2"
+                                onClick={() => handleRateArtist(booking)}
+                              >
+                                Rate Artist
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
                 </div>
               )}
             </Card.Body>
           </Card>
 
-          <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
-            <Modal.Header closeButton>
-              <Modal.Title>Booking Details</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              {selectedBooking && (
-                <Row>
-                  <Col md={6}>
-                    <h6 className="fw-bold mb-3">Event Information</h6>
-                    <p><strong>Event Name:</strong> {selectedBooking.event_name}</p>
-                    <p><strong>Date:</strong> {formatDateTime(selectedBooking.event_date)}</p>
-                    <p><strong>Time:</strong> {selectedBooking.event_time}</p>
-                    {selectedBooking.duration && (
-                      <p><strong>Duration:</strong> {selectedBooking.duration}</p>
-                    )}
-                    {selectedBooking.venue_address && (
-                      <p><strong>Venue:</strong> {selectedBooking.venue_address}</p>
-                    )}
-                    {selectedBooking.event_description && (
-                      <p><strong>Description:</strong> {selectedBooking.event_description}</p>
-                    )}
-                  </Col>
-                  
-                  <Col md={6}>
-                    <h6 className="fw-bold mb-3">Artist Information</h6>
-                    <p><strong>Name:</strong> {selectedBooking.artist_name}</p>
-                    <p><strong>Email:</strong> {selectedBooking.artist_email}</p>
-                    {selectedBooking.artist_phone && (
-                      <p><strong>Phone:</strong> {selectedBooking.artist_phone}</p>
-                    )}
-                    {selectedBooking.artist_location && (
-                      <p><strong>Location:</strong> {selectedBooking.artist_location}</p>
-                    )}
-                    
-                    <h6 className="fw-bold mb-3 mt-4">Booking Information</h6>
-                    <p><strong>Status:</strong> 
-                      {selectedBooking.payment_status === 'paid' ? (
-                        <span>
-                          <Badge bg="primary" className="ms-2">💳 Payment Made</Badge>
-                          <br />
-                          <small className="text-muted">Booking Status: {selectedBooking.status}</small>
-                        </span>
-                      ) : selectedBooking.payment_status === 'released' ? (
-                        <span>
-                          <Badge bg="success" className="ms-2">✅ Payment Released</Badge>
-                          <br />
-                          <small className="text-muted">Event Completed</small>
-                        </span>
-                      ) : selectedBooking.status === 'disputed' ? (
-                        <span>
-                          <Badge bg="warning" className="ms-2">⚠️ Disputed</Badge>
-                          <br />
-                          <small className="text-muted">Under Admin Review</small>
-                        </span>
-                      ) : (
-                        getStatusBadge(selectedBooking.status)
-                      )}
-                    </p>
-                    {selectedBooking.payment_status && (
-                      <p><strong>Payment:</strong> {getPaymentStatusBadge(selectedBooking.payment_status)}</p>
-                    )}
-                    {selectedBooking.total_amount && (
-                      <p><strong>Amount:</strong> ${parseFloat(selectedBooking.total_amount).toFixed(2)}</p>
-                    )}
-                    {selectedBooking.platform_fee && (
-                      <p><strong>Platform Fee:</strong> ${parseFloat(selectedBooking.platform_fee).toFixed(2)} (10%)</p>
-                    )}
-                    {selectedBooking.net_amount && (
-                      <p><strong>Artist Receives:</strong> ${parseFloat(selectedBooking.net_amount).toFixed(2)}</p>
-                    )}
-                    {selectedBooking.package_title && (
-                      <p><strong>Package:</strong> {selectedBooking.package_title}</p>
-                    )}
-                    {selectedBooking.payment_date && (
-                      <p><strong>Payment Date:</strong> {formatDateTime(selectedBooking.payment_date)}</p>
-                    )}
-                    {selectedBooking.completion_date && (
-                      <p><strong>Completion Date:</strong> {formatDateTime(selectedBooking.completion_date)}</p>
-                    )}
-                  </Col>
-                  
-                  {selectedBooking.special_requirements && (
-                    <Col md={12} className="mt-3">
-                      <h6 className="fw-bold mb-3">Special Requirements</h6>
-                      <p>{selectedBooking.special_requirements}</p>
-                    </Col>
-                  )}
-                </Row>
-              )}
-              {renderPaymentActions(selectedBooking)}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
-                Close
-              </Button>
-            </Modal.Footer>
-          </Modal>
-
-          <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)}>
-            <Modal.Header closeButton>
-              <Modal.Title>Cancel Booking</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              {selectedBooking && (
-                <>
-                  <Alert variant="warning">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    Are you sure you want to cancel the booking for <strong>{selectedBooking.event_name}</strong>?
-                  </Alert>
-                  
-                  <Form.Group>
-                    <Form.Label>Cancellation Reason (Optional)</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      placeholder="Please provide a reason for cancellation..."
-                    />
-                  </Form.Group>
-                </>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowCancelModal(false)} disabled={cancelling}>
-                Keep Booking
-              </Button>
-              <Button variant="danger" onClick={confirmCancelBooking} disabled={cancelling}>
-                {cancelling ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" />
-                    Cancelling...
-                  </>
-                ) : (
-                  'Cancel Booking'
+      <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Booking Details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedBooking && (
+            <Row>
+              <Col md={6}>
+                <h6 className="fw-bold mb-3">Event Information</h6>
+                <p><strong>Event Name:</strong> {selectedBooking.event_name}</p>
+                <p><strong>Date:</strong> {formatDateTime(selectedBooking.event_date)}</p>
+                <p><strong>Time:</strong> {selectedBooking.event_time}</p>
+                {selectedBooking.duration && (
+                  <p><strong>Duration:</strong> {selectedBooking.duration}</p>
                 )}
-              </Button>
-            </Modal.Footer>
-          </Modal>
-
-          <Modal show={showDisputeModal} onHide={() => setShowDisputeModal(false)}>
-            <Modal.Header closeButton>
-              <Modal.Title>Report Issue</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              {selectedBooking && (
-                <>
-                  <Alert variant="warning">
-                    <i className="fas fa-exclamation-triangle me-2"></i>
-                    Are you sure you want to report an issue for the booking for <strong>{selectedBooking.event_name}</strong>?
-                  </Alert>
-                  
-                  <Form.Group>
-                    <Form.Label>Issue Description</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      value={disputeDescription}
-                      onChange={(e) => setDisputeDescription(e.target.value)}
-                      placeholder="Please provide a description of the issue..."
-                    />
-                  </Form.Group>
-                </>
+                {selectedBooking.venue_address && (
+                  <p><strong>Venue:</strong> {selectedBooking.venue_address}</p>
+                )}
+                {selectedBooking.event_description && (
+                  <p><strong>Description:</strong> {selectedBooking.event_description}</p>
+                )}
+              </Col>
+              
+              <Col md={6}>
+                <h6 className="fw-bold mb-3">Artist Information</h6>
+                <p><strong>Name:</strong> {selectedBooking.artist_name}</p>
+                <p><strong>Email:</strong> {selectedBooking.artist_email}</p>
+                {selectedBooking.artist_phone && (
+                  <p><strong>Phone:</strong> {selectedBooking.artist_phone}</p>
+                )}
+                {selectedBooking.artist_location && (
+                  <p><strong>Location:</strong> {selectedBooking.artist_location}</p>
+                )}
+                
+                <h6 className="fw-bold mb-3 mt-4">Booking Information</h6>
+                <p><strong>Status:</strong> 
+                  {selectedBooking.payment_status === 'paid' ? (
+                    <span>
+                      <Badge bg="primary" className="ms-2">💳 Payment Made</Badge>
+                      <br />
+                      <small className="text-muted">Booking Status: {selectedBooking.status}</small>
+                    </span>
+                  ) : selectedBooking.payment_status === 'released' ? (
+                    <span>
+                      <Badge bg="success" className="ms-2">✅ Payment Released</Badge>
+                      <br />
+                      <small className="text-muted">Event Completed</small>
+                    </span>
+                  ) : selectedBooking.status === 'disputed' ? (
+                    <span>
+                      <Badge bg="warning" className="ms-2">⚠️ Disputed</Badge>
+                      <br />
+                      <small className="text-muted">Under Admin Review</small>
+                    </span>
+                  ) : (
+                    getStatusBadge(selectedBooking.status)
+                  )}
+                </p>
+                {selectedBooking.payment_status && (
+                  <p><strong>Payment:</strong> {getPaymentStatusBadge(selectedBooking.payment_status)}</p>
+                )}
+                {selectedBooking.total_amount && (
+                  <p><strong>Amount:</strong> ${parseFloat(selectedBooking.total_amount).toFixed(2)}</p>
+                )}
+                {selectedBooking.platform_fee && (
+                  <p><strong>Platform Fee:</strong> ${parseFloat(selectedBooking.platform_fee).toFixed(2)} (10%)</p>
+                )}
+                {selectedBooking.net_amount && (
+                  <p><strong>Artist Receives:</strong> ${parseFloat(selectedBooking.net_amount).toFixed(2)}</p>
+                )}
+                {selectedBooking.package_title && (
+                  <p><strong>Package:</strong> {selectedBooking.package_title}</p>
+                )}
+                {selectedBooking.payment_date && (
+                  <p><strong>Payment Date:</strong> {formatDateTime(selectedBooking.payment_date)}</p>
+                )}
+                {selectedBooking.completion_date && (
+                  <p><strong>Completion Date:</strong> {formatDateTime(selectedBooking.completion_date)}</p>
+                )}
+              </Col>
+              
+              {selectedBooking.special_requirements && (
+                <Col md={12} className="mt-3">
+                  <h6 className="fw-bold mb-3">Special Requirements</h6>
+                  <p>{selectedBooking.special_requirements}</p>
+                </Col>
               )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={() => setShowDisputeModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="danger" onClick={confirmReportIssue}>
-                Report Issue
-              </Button>
-            </Modal.Footer>
-          </Modal>
+            </Row>
+          )}
+          {renderPaymentActions(selectedBooking)}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
-          <RatingModal
-            show={showRatingModal}
-            onHide={() => setShowRatingModal(false)}
-            booking={selectedBooking}
-            onSuccess={() => {
-              setShowRatingModal(false);
-              fetchBookings();
-            }}
-          />
+      <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Cancel Booking</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedBooking && (
+            <>
+              <Alert variant="warning">
+                <i className="fas fa-exclamation-triangle me-2"></i>
+                Are you sure you want to cancel the booking for <strong>{selectedBooking.event_name}</strong>?
+              </Alert>
+              
+              <Form.Group>
+                <Form.Label>Cancellation Reason (Optional)</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Please provide a reason for cancellation..."
+                />
+              </Form.Group>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCancelModal(false)} disabled={cancelling}>
+            Keep Booking
+          </Button>
+          <Button variant="danger" onClick={confirmCancelBooking} disabled={cancelling}>
+            {cancelling ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Cancelling...
+              </>
+            ) : (
+              'Cancel Booking'
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showDisputeModal} onHide={() => setShowDisputeModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Report Issue</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedBooking && (
+            <>
+              <Alert variant="warning">
+                <i className="fas fa-exclamation-triangle me-2"></i>
+                Are you sure you want to report an issue for the booking for <strong>{selectedBooking.event_name}</strong>?
+              </Alert>
+              
+              <Form.Group>
+                <Form.Label>Issue Description</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={disputeDescription}
+                  onChange={(e) => setDisputeDescription(e.target.value)}
+                  placeholder="Please provide a description of the issue..."
+                />
+              </Form.Group>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDisputeModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmReportIssue}>
+            Report Issue
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <RatingModal
+        show={showRatingModal}
+        onHide={() => setShowRatingModal(false)}
+        booking={selectedBooking}
+        onSuccess={() => {
+          setShowRatingModal(false);
+          fetchBookings();
+        }}
+      />
         </Col>
       </Row>
     </Container>

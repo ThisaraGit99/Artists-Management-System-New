@@ -26,8 +26,9 @@ const ArtistProfile = () => {
             
             // Fetch profile data first
             const profileResponse = await artistService.getProfile();
+            console.log('Fetched profile data:', profileResponse.data); // Debug log
             let profileData = null;
-            
+
             if (profileResponse.data.success) {
                 profileData = profileResponse.data.data;
                 setProfile(profileData);
@@ -43,7 +44,6 @@ const ArtistProfile = () => {
                 }
             } catch (ratingError) {
                 console.warn('Failed to load ratings:', ratingError.message);
-                // Don't set this as a main error since profile is more important
             }
             
         } catch (error) {
@@ -58,22 +58,31 @@ const ArtistProfile = () => {
 
     const handleProfileUpdate = async (data) => {
         try {
+            console.log('Submitting profile data:', data); // Debug log
+            
             // Always try to update first, since we loaded profile data
             try {
                 const response = await artistService.updateProfile(data);
+                console.log('Update response:', response.data); // Debug log
+                
                 if (response.data.success) {
                     toast.success('Profile updated successfully!');
-                    fetchProfileData(); // Refresh the data
+                    await fetchProfileData(); // Refresh the data
+                    console.log('Profile refreshed after update'); // Debug log
                 } else {
                     toast.error(response.data.message || 'Failed to update profile');
                 }
             } catch (updateError) {
+                console.error('Update error:', updateError); // Debug log
+                
                 // If update fails with 404 (profile doesn't exist), try to create
                 if (updateError.response?.status === 404) {
                     const response = await artistService.completeProfile(data);
+                    console.log('Create response:', response.data); // Debug log
+                    
                     if (response.data.success) {
                         toast.success('Profile created successfully!');
-                        fetchProfileData(); // Refresh the data
+                        await fetchProfileData(); // Refresh the data
                     } else {
                         toast.error(response.data.message || 'Failed to create profile');
                     }

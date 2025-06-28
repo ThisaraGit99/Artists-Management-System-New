@@ -59,7 +59,7 @@ const ArtistCard = ({ artist, onViewDetails }) => {
                         
                         {/* Rating */}
                         <div className="mb-2">
-                            <StarDisplay rating={artist.rating || 0} />
+                            <StarDisplay rating={artist.average_rating || 0} />
                             <span className="text-muted ms-2">
                                 ({artist.total_ratings || 0} reviews)
                             </span>

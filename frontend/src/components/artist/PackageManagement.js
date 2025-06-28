@@ -356,13 +356,13 @@ const PackageManagement = () => {
                                 <i className="fas fa-filter me-1"></i>
                                 {showFilters ? 'Hide Filters' : 'Show Filters'}
                             </Button>
-                            <Button 
-                                variant="primary" 
-                                onClick={() => handleShowModal()}
-                            >
-                                <i className="fas fa-plus me-2"></i>
-                                Create Package
-                            </Button>
+                        <Button 
+                            variant="primary" 
+                            onClick={() => handleShowModal()}
+                        >
+                            <i className="fas fa-plus me-2"></i>
+                            Create Package
+                        </Button>
                         </div>
                     </div>
                 </Col>
@@ -561,15 +561,15 @@ const PackageManagement = () => {
             <Card className="mx-0">
                 <Card.Header className="bg-white py-3">
                     <div className="d-flex justify-content-between align-items-center">
-                        <h5 className="mb-0">
-                            <i className="fas fa-list me-2"></i>
-                            Your Packages
+                    <h5 className="mb-0">
+                        <i className="fas fa-list me-2"></i>
+                        Your Packages
                             {filteredPackages.length > 0 && (
                                 <Badge bg="secondary" className="ms-2">
                                     {filteredPackages.length}
                                 </Badge>
                             )}
-                        </h5>
+                    </h5>
                     </div>
                 </Card.Header>
                 <Card.Body className="p-0">
@@ -590,98 +590,98 @@ const PackageManagement = () => {
                                     : "Try adjusting your filters to see more packages"}
                             </p>
                             {packages.length === 0 && (
-                                <Button 
-                                    variant="primary" 
-                                    onClick={() => handleShowModal()}
-                                >
-                                    <i className="fas fa-plus me-2"></i>
-                                    Create Your First Package
-                                </Button>
+                            <Button 
+                                variant="primary" 
+                                onClick={() => handleShowModal()}
+                            >
+                                <i className="fas fa-plus me-2"></i>
+                                Create Your First Package
+                            </Button>
                             )}
                         </div>
                     ) : (
                         <div className="table-responsive">
                             <Table hover className="mb-0">
-                                <thead className="table-light">
-                                    <tr>
+                            <thead className="table-light">
+                                <tr>
                                         <th className="px-4">Package Details</th>
-                                        <th>Category</th>
-                                        <th>Duration</th>
-                                        <th>Price</th>
-                                        <th>Status</th>
+                                    <th>Category</th>
+                                    <th>Duration</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
                                         <th className="px-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                                </tr>
+                            </thead>
+                            <tbody>
                                     {filteredPackages.map(pkg => (
-                                        <tr key={pkg.id}>
+                                    <tr key={pkg.id}>
                                             <td className="px-4">
-                                                <div>
-                                                    <div className="fw-bold">{pkg.title}</div>
-                                                    {pkg.description && (
-                                                        <small className="text-muted">
-                                                            {pkg.description.length > 50 
-                                                                ? `${pkg.description.substring(0, 50)}...` 
-                                                                : pkg.description
-                                                            }
-                                                        </small>
-                                                    )}
-                                                    <div className="mt-1">
-                                                        <small className="text-info">
-                                                            <i className="fas fa-check me-1"></i>
-                                                            {pkg.includes ? 
-                                                                (typeof pkg.includes === 'string' ? 
-                                                                    JSON.parse(pkg.includes).length : pkg.includes.length
-                                                                ) : 0
-                                                            } items included
-                                                        </small>
-                                                    </div>
+                                            <div>
+                                                <div className="fw-bold">{pkg.title}</div>
+                                                {pkg.description && (
+                                                    <small className="text-muted">
+                                                        {pkg.description.length > 50 
+                                                            ? `${pkg.description.substring(0, 50)}...` 
+                                                            : pkg.description
+                                                        }
+                                                    </small>
+                                                )}
+                                                <div className="mt-1">
+                                                    <small className="text-info">
+                                                        <i className="fas fa-check me-1"></i>
+                                                        {pkg.includes ? 
+                                                            (typeof pkg.includes === 'string' ? 
+                                                                JSON.parse(pkg.includes).length : pkg.includes.length
+                                                            ) : 0
+                                                        } items included
+                                                    </small>
                                                 </div>
-                                            </td>
-                                            <td>
-                                                <Badge bg="secondary">{pkg.category}</Badge>
-                                            </td>
-                                            <td>{pkg.duration}</td>
-                                            <td className="fw-bold text-success">
-                                                {formatCurrency(pkg.price)}
-                                            </td>
-                                            <td>
-                                                <Badge bg={pkg.is_active ? 'success' : 'secondary'}>
-                                                    {pkg.is_active ? 'Active' : 'Inactive'}
-                                                </Badge>
-                                            </td>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <Badge bg="secondary">{pkg.category}</Badge>
+                                        </td>
+                                        <td>{pkg.duration}</td>
+                                        <td className="fw-bold text-success">
+                                            {formatCurrency(pkg.price)}
+                                        </td>
+                                        <td>
+                                            <Badge bg={pkg.is_active ? 'success' : 'secondary'}>
+                                                {pkg.is_active ? 'Active' : 'Inactive'}
+                                            </Badge>
+                                        </td>
                                             <td className="px-4">
-                                                <div className="btn-group" role="group">
-                                                    <Button
-                                                        variant="outline-primary"
-                                                        size="sm"
-                                                        onClick={() => handleShowModal(pkg)}
-                                                        title="Edit Package"
-                                                    >
-                                                        <i className="fas fa-edit"></i>
-                                                    </Button>
-                                                    <Button
-                                                        variant={pkg.is_active ? 'outline-warning' : 'outline-success'}
-                                                        size="sm"
-                                                        onClick={() => handleToggleStatus(pkg.id)}
-                                                        title={pkg.is_active ? 'Deactivate' : 'Activate'}
-                                                    >
-                                                        <i className={`fas fa-${pkg.is_active ? 'pause' : 'play'}`}></i>
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline-danger"
-                                                        size="sm"
-                                                        onClick={() => handleDeletePackage(pkg.id, pkg.title)}
-                                                        title="Delete Package"
-                                                    >
-                                                        <i className="fas fa-trash"></i>
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </Table>
+                                            <div className="btn-group" role="group">
+                                                <Button
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    onClick={() => handleShowModal(pkg)}
+                                                    title="Edit Package"
+                                                >
+                                                    <i className="fas fa-edit"></i>
+                                                </Button>
+                                                <Button
+                                                    variant={pkg.is_active ? 'outline-warning' : 'outline-success'}
+                                                    size="sm"
+                                                    onClick={() => handleToggleStatus(pkg.id)}
+                                                    title={pkg.is_active ? 'Deactivate' : 'Activate'}
+                                                >
+                                                    <i className={`fas fa-${pkg.is_active ? 'pause' : 'play'}`}></i>
+                                                </Button>
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    onClick={() => handleDeletePackage(pkg.id, pkg.title)}
+                                                    title="Delete Package"
+                                                >
+                                                    <i className="fas fa-trash"></i>
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
                         </div>
                     )}
                 </Card.Body>

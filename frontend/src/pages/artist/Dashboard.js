@@ -289,6 +289,7 @@ const ArtistDashboard = () => {
                     My Bookings
                   </Button>
                 </Col>
+                {(dashboardData?.artist?.is_verified === true || dashboardData?.artist?.is_verified === 1) && (
                 <Col md={3} className="mb-3">
                   <Button 
                     variant="outline-info" 
@@ -299,6 +300,7 @@ const ArtistDashboard = () => {
                     Find Events
                   </Button>
                 </Col>
+                )}
               </Row>
             </Card.Body>
           </Card>
@@ -460,6 +462,7 @@ const ArtistDashboard = () => {
           </Row>
         </Tab>
 
+        {(dashboardData?.artist?.is_verified === true || dashboardData?.artist?.is_verified === 1) && (
         <Tab eventKey="events" title={
           <span>
             <i className="fas fa-search me-2"></i>
@@ -468,6 +471,7 @@ const ArtistDashboard = () => {
         }>
           <EventBrowser />
         </Tab>
+        )}
       </Tabs>
     </Container>
   );

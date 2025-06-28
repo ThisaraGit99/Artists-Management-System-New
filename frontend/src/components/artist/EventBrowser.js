@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Button, Badge, Modal, Form, Spinner, Alert, InputGroup, Container } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
 import eventService from '../../services/eventService';
 import eventApplicationService from '../../services/eventApplicationService';
 
 const EventBrowser = () => {
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [requiresVerification, setRequiresVerification] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -209,7 +213,13 @@ const EventBrowser = () => {
       if (error.response?.status === 401) {
         setError('Authentication required. Please log in as an artist.');
       } else if (error.response?.status === 403) {
-        setError('Access denied. You must be logged in as an artist to view events.');
+        const errorData = error.response?.data;
+        if (errorData?.requiresVerification) {
+          setRequiresVerification(true);
+          setError('');
+        } else {
+          setError('Access denied. You must be logged in as an artist to view events.');
+        }
       } else {
         setError('Failed to load events. Please try refreshing the page.');
       }
@@ -321,7 +331,7 @@ const EventBrowser = () => {
             <div>
               <h2 className="mb-1">
                 <i className="fas fa-calendar-search me-2"></i>
-                Available Events
+            Available Events
               </h2>
               <p className="text-muted mb-0">
                 Browse and apply for upcoming events that match your skills
@@ -341,9 +351,9 @@ const EventBrowser = () => {
                 onClick={loadEvents}
                 disabled={loading}
               >
-                <i className="fas fa-sync-alt me-1"></i>
-                Refresh
-              </Button>
+            <i className="fas fa-sync-alt me-1"></i>
+            Refresh
+          </Button>
             </div>
           </div>
         </Col>
@@ -356,8 +366,56 @@ const EventBrowser = () => {
         </Alert>
       )}
 
+      {/* Verification Required Alert */}
+      {requiresVerification && (
+        <Alert variant="warning" className="mb-4">
+          <div className="d-flex align-items-center">
+            <i className="fas fa-shield-alt fa-2x text-warning me-3"></i>
+            <div className="flex-grow-1">
+              <h5 className="alert-heading mb-2">
+                <i className="fas fa-exclamation-triangle me-2"></i>
+                Verification Required
+              </h5>
+              <p className="mb-2">
+                Only verified artists can browse and apply to events. Complete your verification process to access available events.
+              </p>
+              <p className="mb-0 small text-muted">
+                Verification helps organizers trust that you're a legitimate artist and improves your chances of getting booked.
+              </p>
+            </div>
+          </div>
+          <hr className="my-3" />
+          <div className="d-flex justify-content-between align-items-center">
+            <small className="text-muted">
+              <i className="fas fa-info-circle me-1"></i>
+              Contact an administrator to complete your verification
+            </small>
+            <div>
+              <Button 
+                variant="outline-warning" 
+                size="sm" 
+                className="me-2"
+                as={Link}
+                to="/artist/profile"
+              >
+                <i className="fas fa-user-edit me-1"></i>
+                Complete Profile
+              </Button>
+              <Button 
+                variant="warning" 
+                size="sm"
+                onClick={() => window.location.href = 'mailto:admin@artistmgmt.com?subject=Artist Verification Request'}
+              >
+                <i className="fas fa-envelope me-1"></i>
+                Contact Admin
+              </Button>
+            </div>
+          </div>
+        </Alert>
+      )}
+
       {/* Filter Section */}
-      {showFilters && (
+      {!requiresVerification && showFilters && (
         <Card className="mb-4 mx-0">
           <Card.Header className="bg-light">
             <div className="d-flex justify-content-between align-items-center">
@@ -377,21 +435,21 @@ const EventBrowser = () => {
           </Card.Header>
           <Card.Body>
             <Row className="g-3">
-              {/* Search */}
+          {/* Search */}
               <Col md={12}>
                 <Form.Group>
                   <Form.Label>Search Events</Form.Label>
-                  <InputGroup>
-                    <InputGroup.Text>
-                      <i className="fas fa-search"></i>
-                    </InputGroup.Text>
-                    <Form.Control
-                      type="text"
+            <InputGroup>
+              <InputGroup.Text>
+                <i className="fas fa-search"></i>
+              </InputGroup.Text>
+              <Form.Control
+                type="text"
                       placeholder="Search by event title or description..."
                       value={filters.searchTerm}
                       onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-                    />
-                  </InputGroup>
+              />
+            </InputGroup>
                 </Form.Group>
               </Col>
 
@@ -399,15 +457,15 @@ const EventBrowser = () => {
               <Col md={4}>
                 <Form.Group>
                   <Form.Label>Event Type</Form.Label>
-                  <Form.Select
+            <Form.Select 
                     value={filters.eventType}
                     onChange={(e) => handleFilterChange('eventType', e.target.value)}
-                  >
+            >
                     <option value="all">All Event Types</option>
-                    {getEventTypes().map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </Form.Select>
+              {getEventTypes().map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </Form.Select>
                 </Form.Group>
               </Col>
 
@@ -509,29 +567,29 @@ const EventBrowser = () => {
               <Col md={3}>
                 <Form.Group>
                   <Form.Label>Sort By</Form.Label>
-                  <Form.Select
+            <Form.Select 
                     value={filters.sortBy}
                     onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                  >
-                    <option value="date_upcoming">Upcoming First</option>
+            >
+              <option value="date_upcoming">Upcoming First</option>
                     <option value="date_newest">Newest First</option>
                     <option value="date_oldest">Oldest First</option>
                     <option value="budget_high">Budget (High to Low)</option>
                     <option value="budget_low">Budget (Low to High)</option>
                     <option value="alphabetical">Alphabetical</option>
-                  </Form.Select>
+            </Form.Select>
                 </Form.Group>
               </Col>
 
               <Col md={3}>
                 <Form.Group className="mt-4 pt-2">
-                  <Form.Check
-                    type="switch"
-                    id="upcoming-switch"
+              <Form.Check
+                type="switch"
+                id="upcoming-switch"
                     label="Show Upcoming Events Only"
                     checked={filters.showUpcomingOnly}
                     onChange={(e) => handleFilterChange('showUpcomingOnly', e.target.checked)}
-                  />
+              />
                 </Form.Group>
               </Col>
             </Row>
@@ -540,8 +598,9 @@ const EventBrowser = () => {
       )}
 
       {/* Events Grid */}
-      <Row className="g-4 mx-0">
-        {loading ? (
+      {!requiresVerification && (
+        <Row className="g-4 mx-0">
+          {loading ? (
           <Col xs={12} className="text-center py-5">
             <Spinner animation="border" role="status" variant="primary">
               <span className="visually-hidden">Loading events...</span>
@@ -550,15 +609,15 @@ const EventBrowser = () => {
           </Col>
         ) : filteredEvents.length === 0 ? (
           <Col xs={12} className="text-center py-5">
-            <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+          <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
             <h5>No events found</h5>
-            <p className="text-muted">
-              {events.length === 0 
+          <p className="text-muted">
+            {events.length === 0 
                 ? "There are no available events at the moment." 
                 : "Try adjusting your filters to see more events."}
             </p>
           </Col>
-        ) : (
+      ) : (
           filteredEvents.map(event => {
             const eventDate = new Date(event.date || event.event_date);
             const isUpcoming = eventDate >= new Date();
@@ -696,7 +755,8 @@ const EventBrowser = () => {
             );
           })
         )}
-      </Row>
+        </Row>
+      )}
 
       {/* Application Modal */}
       <Modal show={showApplicationModal} onHide={() => setShowApplicationModal(false)} size="lg">

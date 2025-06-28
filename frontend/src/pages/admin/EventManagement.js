@@ -145,26 +145,26 @@ const EventManagement = () => {
   }
 
   return (
-    <Container className="py-4 px-4">
+    <Container className="py-4">
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-6 fw-bold text-primary">
+          <h1 className="display-5 fw-bold text-primary">
             <i className="fas fa-calendar-alt me-3"></i>
             Event Management
           </h1>
-          <p className="lead text-muted">Monitor and manage all events created by organizers</p>
+          <p className="lead text-muted">Manage and monitor all system events</p>
         </Col>
       </Row>
 
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-4">
           {error}
         </Alert>
       )}
 
       {/* Filters and Search */}
-      <Card className="mb-4 mx-0">
+      <Card className="border-0 shadow-sm mb-4">
         <Card.Body>
           <Row>
             <Col md={3}>
@@ -234,7 +234,7 @@ const EventManagement = () => {
       </Card>
 
       {/* Events Table */}
-      <Card className="mx-0">
+      <Card className="border-0 shadow-sm">
         <Card.Header className="bg-white">
           <Row className="align-items-center">
             <Col>

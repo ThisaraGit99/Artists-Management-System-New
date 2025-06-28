@@ -152,11 +152,11 @@ const UserManagement = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container className="py-4">
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-6 fw-bold text-primary">
+          <h1 className="display-5 fw-bold text-primary">
             <i className="fas fa-users me-3"></i>
             User Management
           </h1>
@@ -165,13 +165,13 @@ const UserManagement = () => {
       </Row>
 
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+        <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-4">
           {error}
         </Alert>
       )}
 
       {/* Filters and Search */}
-      <Card className="mb-4">
+      <Card className="border-0 shadow-sm mb-4">
         <Card.Body>
           <Row>
             <Col md={4}>
@@ -225,7 +225,7 @@ const UserManagement = () => {
       </Card>
 
       {/* Users Table */}
-      <Card className="shadow-sm">
+      <Card className="border-0 shadow-sm">
         <Card.Header className="bg-white py-3">
           <Row className="align-items-center">
             <Col>
@@ -268,7 +268,7 @@ const UserManagement = () => {
                         <div className="flex-shrink-0">
                           <div className="avatar avatar-sm rounded-circle bg-light text-primary">
                             <i className="fas fa-user"></i>
-                          </div>
+                            </div>
                         </div>
                         <div className="flex-grow-1 ms-2">
                           <h6 className="mb-0">{user.name}</h6>
@@ -324,8 +324,8 @@ const UserManagement = () => {
                         variant="link"
                         size="sm"
                         className="text-danger p-0"
-                        onClick={() => openDeleteModal(user)}
-                      >
+                            onClick={() => openDeleteModal(user)}
+                          >
                         <i className="fas fa-trash-alt"></i>
                       </Button>
                     </td>
@@ -372,14 +372,14 @@ const UserManagement = () => {
                         {index > 0 && array[index - 1] !== page - 1 && (
                           <Pagination.Ellipsis />
                         )}
-                        <Pagination.Item
+                    <Pagination.Item
                           active={page === currentPage}
                           onClick={() => setCurrentPage(page)}
-                        >
+                    >
                           {page}
-                        </Pagination.Item>
+                    </Pagination.Item>
                       </React.Fragment>
-                    ))}
+                  ))}
                   <Pagination.Next
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === pagination.totalPages}

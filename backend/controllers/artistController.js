@@ -301,11 +301,18 @@ const artistController = {
     async updateProfile(req, res) {
         try {
             const artistId = req.user.id;
-            const { bio, genres, experience_years, hourly_rate, location, website, social_links } = req.body;
+            const { bio, nic, genres, experience_years, hourly_rate, location, website, social_links } = req.body;
+            
+            console.log('Received profile update request:', {
+                userId: artistId,
+                nic,
+                bio: bio?.substring(0, 20) + '...' // Log just the start of bio for brevity
+            });
             
             // Validate data
             const validation = validateJsonData({ genres, social_links });
             if (!validation.isValid) {
+                console.log('Validation failed:', validation.errors);
                 return res.status(400).json({
                     success: false,
                     message: 'Invalid data format',
@@ -315,34 +322,88 @@ const artistController = {
             
             // Format data for database storage
             const formattedData = formatForDatabase({
-                bio, genres, experience_years, hourly_rate, location, website, social_links
+                bio, nic, genres, experience_years, hourly_rate, location, website, social_links
             });
             
-            const result = await executeQuery(
-                `UPDATE artists SET 
-                 bio = ?, genres = ?, experience_years = ?, 
-                 hourly_rate = ?, location = ?, website = ?, 
-                 social_links = ?, updated_at = NOW()
-                 WHERE user_id = ?`,
-                [
-                    formattedData.bio, 
-                    formattedData.genres, 
-                    formattedData.experience_years, 
-                    formattedData.hourly_rate, 
-                    formattedData.location, 
-                    formattedData.website, 
-                    formattedData.social_links, 
-                    artistId
-                ]
+            console.log('Formatted data for database:', {
+                nic: formattedData.nic,
+                bio: formattedData.bio?.substring(0, 20) + '...' // Log just the start of bio for brevity
+            });
+
+            // First check if artist exists
+            const checkResult = await executeQuery(
+                'SELECT id FROM artists WHERE user_id = ?',
+                [artistId]
             );
-            
-            if (!result.success) {
-                return res.status(500).json({
-                    success: false,
-                    message: 'Failed to update profile'
-                });
+
+            console.log('Check if artist exists:', checkResult);
+
+            if (!checkResult.success || checkResult.data.length === 0) {
+                console.log('Artist not found, creating new profile');
+                // If artist doesn't exist, create new profile
+                const createResult = await executeQuery(
+                    `INSERT INTO artists (user_id, bio, nic, genres, experience_years, hourly_rate, location, website, social_links, profile_complete)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        CASE 
+                            WHEN (? IS NOT NULL AND ? != '' AND ? IS NOT NULL AND ? != '') THEN 1
+                            ELSE 0
+                        END)`,
+                    [
+                        artistId,
+                        formattedData.bio,
+                        formattedData.nic,
+                        formattedData.genres,
+                        formattedData.experience_years,
+                        formattedData.hourly_rate,
+                        formattedData.location,
+                        formattedData.website,
+                        formattedData.social_links,
+                        formattedData.bio,
+                        formattedData.bio,
+                        formattedData.nic,
+                        formattedData.nic
+                    ]
+                );
+                console.log('Create result:', createResult);
+            } else {
+                console.log('Artist found, updating profile');
+                // If artist exists, update profile
+                const updateResult = await executeQuery(
+                    `UPDATE artists SET 
+                     bio = ?, nic = ?, genres = ?, experience_years = ?, 
+                     hourly_rate = ?, location = ?, website = ?, 
+                     social_links = ?, updated_at = NOW(),
+                     profile_complete = CASE 
+                         WHEN (? IS NOT NULL AND ? != '' AND ? IS NOT NULL AND ? != '') THEN 1
+                         ELSE 0
+                     END
+                     WHERE user_id = ?`,
+                    [
+                        formattedData.bio,
+                        formattedData.nic,
+                        formattedData.genres,
+                        formattedData.experience_years,
+                        formattedData.hourly_rate,
+                        formattedData.location,
+                        formattedData.website,
+                        formattedData.social_links,
+                        formattedData.bio,
+                        formattedData.bio,
+                        formattedData.nic,
+                        formattedData.nic,
+                        artistId
+                    ]
+                );
+                console.log('Update result:', updateResult);
             }
-            
+
+            // Verify the update
+            const verifyResult = await executeQuery(
+                'SELECT id, bio, nic, profile_complete FROM artists WHERE user_id = ?',
+                [artistId]
+            );
+            console.log('Verification after update:', verifyResult.data[0]);
+
             res.json({
                 success: true,
                 message: 'Profile updated successfully'
@@ -360,7 +421,7 @@ const artistController = {
     async completeProfile(req, res) {
         try {
             const userId = req.user.id;
-            const { bio, genres, experience_years, hourly_rate, location, website, social_links } = req.body;
+            const { bio, nic, genres, experience_years, hourly_rate, location, website, social_links } = req.body;
             
             // Check if artist profile already exists
             const existingResult = await executeQuery(
@@ -387,22 +448,33 @@ const artistController = {
             
             // Format data for database storage
             const formattedData = formatForDatabase({
-                bio, genres, experience_years, hourly_rate, location, website, social_links
+                bio, nic, genres, experience_years, hourly_rate, location, website, social_links
             });
             
-            // Create artist profile
+            // Create artist profile with automatic profile_complete calculation
             const result = await executeQuery(
-                `INSERT INTO artists (user_id, bio, genres, experience_years, hourly_rate, location, website, social_links, profile_complete) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                `INSERT INTO artists (user_id, bio, nic, genres, experience_years, hourly_rate, location, website, social_links, profile_complete) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                     CASE 
+                         WHEN (? IS NOT NULL AND ? != '' AND ? IS NOT NULL AND ? != '') THEN 1
+                         ELSE 0
+                     END
+                 )`,
                 [
                     userId, 
-                    formattedData.bio, 
+                    formattedData.bio,
+                    formattedData.nic, 
                     formattedData.genres, 
                     formattedData.experience_years, 
                     formattedData.hourly_rate, 
                     formattedData.location, 
                     formattedData.website, 
-                    formattedData.social_links
+                    formattedData.social_links,
+                    // Parameters for profile_complete calculation
+                    formattedData.bio,
+                    formattedData.bio,
+                    formattedData.nic,
+                    formattedData.nic
                 ]
             );
             
@@ -1548,11 +1620,22 @@ const artistController = {
         try {
             const { genre, location, min_rate, max_rate, experience_years, search } = req.query;
             
+            // Current strict filter - only shows verified artists with complete profiles
             let query = `
-                SELECT a.*, u.name, u.email, u.phone 
+                SELECT 
+                    a.*,
+                    u.name,
+                    u.email,
+                    u.phone,
+                    COALESCE(AVG(r.overall_rating), 0) as average_rating,
+                    COUNT(r.id) as total_ratings
                 FROM artists a 
                 JOIN users u ON a.user_id = u.id 
-                WHERE a.profile_complete = 1 AND a.is_verified = 1
+                LEFT JOIN reviews r ON u.id = r.reviewee_id 
+                    AND r.is_approved = 1 
+                    AND r.is_public = 1
+                WHERE a.profile_complete = 1 
+                AND a.is_verified = 1
             `;
             
             const params = [];
@@ -1587,7 +1670,8 @@ const artistController = {
                 params.push(`%${search}%`, `%${search}%`);
             }
             
-            query += ' ORDER BY a.created_at DESC LIMIT 50';
+            query += ' GROUP BY a.id, u.id';
+            query += ' ORDER BY average_rating DESC, a.created_at DESC LIMIT 50';
             
             const result = await executeQuery(query, params);
             
@@ -1645,9 +1729,16 @@ const artistController = {
                 [artistId]
             );
             
+            // Get availability
+            const availabilityResult = await executeQuery(
+                'SELECT * FROM artist_availability WHERE artist_id = ? ORDER BY date_from, time_from',
+                [artistId]
+            );
+            
             artist.skills = skillsResult.success ? skillsResult.data : [];
             artist.portfolio = portfolioResult.success ? portfolioResult.data : [];
             artist.packages = packagesResult.success ? packagesResult.data : [];
+            artist.availability = availabilityResult.success ? availabilityResult.data : [];
             
             res.json({
                 success: true,

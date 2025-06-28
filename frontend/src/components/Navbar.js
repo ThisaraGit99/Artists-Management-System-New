@@ -117,13 +117,18 @@ const Navbar = () => {
                 id="user-dropdown"
                 align="end"
               >
-                <NavDropdown.Item as={Link} to="/profile">
+                <NavDropdown.Item 
+                  as={Link} 
+                  to={
+                    user?.role === 'organizer' 
+                      ? '/organizer/profile' 
+                      : user?.role === 'artist'
+                        ? '/artist/profile'
+                        : '/profile'
+                  }
+                >
                   <i className="fas fa-user-edit me-2"></i>
                   Edit Profile
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/settings">
-                  <i className="fas fa-cog me-2"></i>
-                  Settings
                 </NavDropdown.Item>
                 <NavDropdown.Divider />
                 <NavDropdown.Item onClick={handleLogout}>

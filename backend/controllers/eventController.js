@@ -287,9 +287,33 @@ const eventController = {
     }
   },
 
-  // Browse public events (for artists)
+  // Browse public events (for verified artists only)
   browseEvents: async (req, res) => {
     try {
+      // Check if user is an artist and is verified (unless admin)
+      if (req.user.role === 'artist') {
+        const artistResult = await executeQuery(
+          'SELECT is_verified FROM artists WHERE user_id = ?',
+          [req.user.id]
+        );
+
+        if (!artistResult.success || artistResult.data.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Artist profile not found'
+          });
+        }
+
+        const artist = artistResult.data[0];
+        if (!artist.is_verified) {
+          return res.status(403).json({
+            success: false,
+            message: 'Only verified artists can browse events. Please complete your verification process.',
+            requiresVerification: true
+          });
+        }
+      }
+
       const {
         event_type,
         city,

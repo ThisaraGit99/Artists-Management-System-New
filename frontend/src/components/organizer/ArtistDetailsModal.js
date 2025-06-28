@@ -6,6 +6,7 @@ import BookingRequestModal from './BookingRequestModal';
 
 const ArtistDetailsModal = ({ artist, show, onHide }) => {
   const [artistDetails, setArtistDetails] = useState(null);
+  const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -23,6 +24,8 @@ const ArtistDetailsModal = ({ artist, show, onHide }) => {
       
       if (response.data.success) {
         setArtistDetails(response.data.data);
+        // Set availability from the artist details response
+        setAvailability(response.data.data.availability || []);
       } else {
         toast.error('Failed to fetch artist details');
       }
@@ -284,6 +287,197 @@ const ArtistDetailsModal = ({ artist, show, onHide }) => {
     );
   };
 
+  const renderAvailability = () => {
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      return new Date(dateString).toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    };
+
+    const formatTime = (time) => {
+      if (!time) return '';
+      return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
+
+    const isDatePast = (dateString) => {
+      return new Date(dateString) < new Date();
+    };
+
+    const getUpcomingAvailability = () => {
+      return availability.filter(av => !isDatePast(av.date_to)).sort((a, b) => new Date(a.date_from) - new Date(b.date_from));
+    };
+
+    const getPastAvailability = () => {
+      return availability.filter(av => isDatePast(av.date_to)).sort((a, b) => new Date(b.date_from) - new Date(a.date_from));
+    };
+
+    return (
+      <div>
+        {availability.length > 0 ? (
+          <div>
+            <div className="mb-4">
+              <h6 className="fw-bold mb-3">
+                <i className="fas fa-calendar-alt me-2"></i>
+                Artist Availability
+              </h6>
+              <p className="text-muted small">
+                These are the artist's specific availability dates and times. Contact them to confirm and book.
+              </p>
+            </div>
+
+            {/* Upcoming Availability */}
+            {getUpcomingAvailability().length > 0 && (
+              <div className="mb-4">
+                <h6 className="fw-bold text-success mb-3">
+                  <i className="fas fa-calendar-plus me-2"></i>
+                  Upcoming Availability
+                </h6>
+                <Row>
+                  {getUpcomingAvailability().map((slot, index) => (
+                    <Col md={6} lg={4} key={index} className="mb-3">
+                      <Card className={`border-0 shadow-sm h-100 ${slot.is_available ? 'border-success' : 'border-warning'}`}>
+                        <Card.Body>
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <Badge 
+                              bg={slot.is_available ? 'success' : 'warning'} 
+                              className="small"
+                            >
+                              {slot.is_available ? 'Available' : 'Busy'}
+                            </Badge>
+                          </div>
+                          
+                          <div className="mb-2">
+                            <strong className="text-primary">
+                              {formatDate(slot.date_from)}
+                            </strong>
+                            {slot.date_from !== slot.date_to && (
+                              <div className="small text-muted">
+                                to {formatDate(slot.date_to)}
+                              </div>
+                            )}
+                          </div>
+
+                          {(slot.time_from || slot.time_to) && (
+                            <div className="mb-2">
+                              <i className="fas fa-clock me-1 text-muted"></i>
+                              <span className="small">
+                                {slot.time_from && formatTime(slot.time_from)}
+                                {slot.time_from && slot.time_to && ' - '}
+                                {slot.time_to && formatTime(slot.time_to)}
+                                {!slot.time_from && !slot.time_to && 'All day'}
+                              </span>
+                            </div>
+                          )}
+
+                          {slot.notes && (
+                            <div className="text-muted small">
+                              <i className="fas fa-sticky-note me-1"></i>
+                              {slot.notes}
+                            </div>
+                          )}
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              </div>
+            )}
+
+            {/* Past Availability (if any) */}
+            {getPastAvailability().length > 0 && (
+              <div className="mb-4">
+                <h6 className="fw-bold text-muted mb-3">
+                  <i className="fas fa-history me-2"></i>
+                  Past Availability (Last 5)
+                </h6>
+                <Row>
+                  {getPastAvailability().slice(0, 5).map((slot, index) => (
+                    <Col md={6} lg={4} key={index} className="mb-3">
+                      <Card className="border-0 bg-light h-100">
+                        <Card.Body>
+                          <div className="mb-2">
+                            <span className="text-muted">
+                              {formatDate(slot.date_from)}
+                            </span>
+                            {slot.date_from !== slot.date_to && (
+                              <div className="small text-muted">
+                                to {formatDate(slot.date_to)}
+                              </div>
+                            )}
+                          </div>
+
+                          {(slot.time_from || slot.time_to) && (
+                            <div className="small text-muted">
+                              <i className="fas fa-clock me-1"></i>
+                              {slot.time_from && formatTime(slot.time_from)}
+                              {slot.time_from && slot.time_to && ' - '}
+                              {slot.time_to && formatTime(slot.time_to)}
+                              {!slot.time_from && !slot.time_to && 'All day'}
+                            </div>
+                          )}
+                        </Card.Body>
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="mt-4 p-3 bg-light rounded">
+              <h6 className="fw-bold mb-2">
+                <i className="fas fa-info-circle me-2"></i>
+                Availability Summary
+              </h6>
+              <Row>
+                <Col md={4}>
+                  <small className="text-muted">
+                    <strong>Total slots:</strong> {availability.length}
+                  </small>
+                </Col>
+                <Col md={4}>
+                  <small className="text-muted">
+                    <strong>Available slots:</strong> {availability.filter(av => av.is_available).length}
+                  </small>
+                </Col>
+                <Col md={4}>
+                  <small className="text-muted">
+                    <strong>Upcoming:</strong> {getUpcomingAvailability().length}
+                  </small>
+                </Col>
+              </Row>
+              <div className="mt-2">
+                <small className="text-muted">
+                  <i className="fas fa-lightbulb me-1"></i>
+                  <em>Contact the artist to discuss specific dates, confirm availability, and make bookings.</em>
+                </small>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-5">
+            <i className="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h6 className="text-muted">No Availability Information</h6>
+            <p className="text-muted small mb-0">
+              This artist hasn't set up their availability schedule yet.
+            </p>
+            <p className="text-muted small">
+              You can still send a booking request to discuss available dates.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Modal show={show} onHide={onHide} size="lg" centered>
@@ -314,6 +508,9 @@ const ArtistDetailsModal = ({ artist, show, onHide }) => {
               </Tab>
               <Tab eventKey="packages" title="Packages">
                 {renderPackages()}
+              </Tab>
+              <Tab eventKey="availability" title="Availability">
+                {renderAvailability()}
               </Tab>
             </Tabs>
           ) : (

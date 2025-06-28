@@ -418,8 +418,9 @@ const CreateEventForm = ({ onSubmit, onCancel, initialData, isEdit = false }) =>
               {musicGenres.map((genre) => (
                 <Badge
                   key={genre}
-                  bg={formData.requirements.includes(genre) ? 'primary' : 'outline-secondary'}
-                  className={`p-2 cursor-pointer ${!formData.requirements.includes(genre) ? 'border' : ''}`}
+                  bg={formData.requirements.includes(genre) ? 'primary' : 'light'}
+                  text={formData.requirements.includes(genre) ? 'light' : 'dark'}
+                  className={`p-2 cursor-pointer border`}
                   style={{ cursor: 'pointer' }}
                   onClick={() => handleGenreToggle(genre)}
                 >
