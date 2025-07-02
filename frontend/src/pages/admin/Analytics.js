@@ -59,6 +59,38 @@ const Analytics = () => {
     return `${((value / total) * 100).toFixed(1)}%`;
   };
 
+  // Date filter preset functions
+  const setDatePreset = (preset) => {
+    const now = new Date();
+    let startDate, endDate;
+
+    switch (preset) {
+      case 'today':
+        startDate = new Date(now);
+        endDate = new Date(now);
+        break;
+      case 'week':
+        startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        endDate = new Date(now);
+        break;
+      case 'month':
+        startDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
+        endDate = new Date(now);
+        break;
+      case 'quarter':
+        startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+        endDate = new Date(now);
+        break;
+      default:
+        return;
+    }
+
+    setDateRange({
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    });
+  };
+
   if (loading) {
     return (
       <Container className="py-4 text-center">
@@ -91,7 +123,54 @@ const Analytics = () => {
 
       {/* Date Range Filter */}
       <Card className="mb-4">
+        <Card.Header className="bg-white">
+          <h6 className="mb-0">
+            <i className="fas fa-calendar-alt me-2"></i>
+            Date Range Filter
+          </h6>
+        </Card.Header>
         <Card.Body>
+          {/* Preset Filter Buttons */}
+          <Row className="mb-3">
+            <Col>
+              <div className="d-flex flex-wrap gap-2">
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setDatePreset('today')}
+                >
+                  <i className="fas fa-clock me-1"></i>
+                  Today
+                </Button>
+                <Button
+                  variant="outline-info"
+                  size="sm"
+                  onClick={() => setDatePreset('week')}
+                >
+                  <i className="fas fa-calendar-week me-1"></i>
+                  Last 7 Days
+                </Button>
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  onClick={() => setDatePreset('month')}
+                >
+                  <i className="fas fa-calendar-day me-1"></i>
+                  Last 30 Days
+                </Button>
+                <Button
+                  variant="outline-warning"
+                  size="sm"
+                  onClick={() => setDatePreset('quarter')}
+                >
+                  <i className="fas fa-calendar me-1"></i>
+                  Last 90 Days
+                </Button>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Custom Date Range */}
           <Row className="align-items-end">
             <Col md={3}>
               <Form.Label>Start Date</Form.Label>
@@ -115,6 +194,11 @@ const Analytics = () => {
                 Update Report
               </Button>
             </Col>
+            <Col md={3}>
+              <small className="text-muted">
+                Or use preset filters above for quick selection
+              </small>
+            </Col>
           </Row>
         </Card.Body>
       </Card>
@@ -129,7 +213,7 @@ const Analytics = () => {
                 <h3 className="fw-bold text-primary">{analyticsData.platformMetrics.total_artists || 0}</h3>
                 <p className="text-muted mb-0">Total Artists</p>
                 <small className="text-success">
-                  +{analyticsData.platformMetrics.weekly_signups || 0} this week
+                  +{analyticsData.platformMetrics.weekly_signups || 0} last 7 days
                 </small>
               </Card.Body>
             </Card>
@@ -141,7 +225,7 @@ const Analytics = () => {
                 <h3 className="fw-bold text-info">{analyticsData.platformMetrics.total_organizers || 0}</h3>
                 <p className="text-muted mb-0">Total Organizers</p>
                 <small className="text-success">
-                  +{analyticsData.platformMetrics.monthly_signups || 0} this month
+                  +{analyticsData.platformMetrics.monthly_signups || 0} last 30 days
                 </small>
               </Card.Body>
             </Card>
@@ -165,9 +249,9 @@ const Analytics = () => {
                 <h3 className="fw-bold text-warning">
                   {formatCurrency(analyticsData.revenueAnalytics.total_revenue)}
                 </h3>
-                <p className="text-muted mb-0">Total Revenue</p>
+                <p className="text-muted mb-0">Platform Revenue</p>
                 <small className="text-muted">
-                  Avg: {formatCurrency(analyticsData.bookingAnalytics.avg_booking_value)}
+                  (10% Commission)
                 </small>
               </Card.Body>
             </Card>
@@ -178,7 +262,7 @@ const Analytics = () => {
       {/* Booking Analytics */}
       {analyticsData && (
         <Row className="mb-4">
-          <Col lg={6}>
+          <Col lg={12}>
             <Card className="h-100">
               <Card.Header className="bg-white">
                 <h5 className="mb-0">
@@ -217,32 +301,6 @@ const Analytics = () => {
                     </div>
                   </div>
                 </div>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col lg={6}>
-            <Card className="h-100">
-              <Card.Header className="bg-white">
-                <h5 className="mb-0">
-                  <i className="fas fa-music me-2"></i>
-                  Popular Event Types
-                </h5>
-              </Card.Header>
-              <Card.Body>
-                {analyticsData.eventTypeAnalytics.length === 0 ? (
-                  <p className="text-muted text-center">No event data available</p>
-                ) : (
-                  analyticsData.eventTypeAnalytics.slice(0, 5).map((eventType, index) => (
-                    <div key={index} className="d-flex justify-content-between align-items-center mb-2">
-                      <span className="text-capitalize">{eventType.event_type}</span>
-                      <div className="text-end">
-                        <span className="fw-bold">{eventType.event_count}</span>
-                        <br />
-                        <small className="text-muted">{eventType.booking_count} bookings</small>
-                      </div>
-                    </div>
-                  ))
-                )}
               </Card.Body>
             </Card>
           </Col>
@@ -350,20 +408,20 @@ const Analytics = () => {
                     <div className="display-6 fw-bold text-primary">
                       {userAnalytics.activityMetrics.active_artists_week || 0}
                     </div>
-                    <small className="text-muted">Active Artists (Week)</small>
+                    <small className="text-muted">Active Artists (Last 7 Days)</small>
                   </div>
                   <div className="col-4">
                     <div className="display-6 fw-bold text-info">
                       {userAnalytics.activityMetrics.active_organizers_week || 0}
                     </div>
-                    <small className="text-muted">Active Organizers (Week)</small>
+                    <small className="text-muted">Active Organizers (Last 7 Days)</small>
                   </div>
                   <div className="col-4">
                     <div className="display-6 fw-bold text-success">
                       {(userAnalytics.activityMetrics.active_artists_month || 0) + 
                        (userAnalytics.activityMetrics.active_organizers_month || 0)}
                     </div>
-                    <small className="text-muted">Total Active (Month)</small>
+                    <small className="text-muted">Total Active (Last 30 Days)</small>
                   </div>
                 </div>
               </Card.Body>
@@ -387,10 +445,10 @@ const Analytics = () => {
                     </div>
                     <div className="text-end">
                       <div className="fw-bold text-success">+{stat.new_users_week}</div>
-                      <small className="text-muted">This week</small>
+                      <small className="text-muted">Last 7 days</small>
                       <br />
                       <div className="fw-bold text-info">+{stat.new_users_month}</div>
-                      <small className="text-muted">This month</small>
+                      <small className="text-muted">Last 30 days</small>
                     </div>
                   </div>
                 ))}

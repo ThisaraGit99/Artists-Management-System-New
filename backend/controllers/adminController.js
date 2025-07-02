@@ -33,9 +33,9 @@ const adminController = {
       let monthlyRevenue = 0;
       try {
         const [revenueResult] = await pool.execute(`
-          SELECT COALESCE(SUM(total_amount), 0) as total 
+          SELECT COALESCE(SUM(total_amount * 0.10), 0) as total 
           FROM bookings 
-          WHERE status = "confirmed" 
+          WHERE status = "completed" 
           AND MONTH(created_at) = MONTH(CURRENT_DATE()) 
           AND YEAR(created_at) = YEAR(CURRENT_DATE())
         `);
@@ -637,7 +637,7 @@ const adminController = {
             SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed_bookings,
             SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
             SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_bookings,
-            AVG(total_amount) as avg_booking_value
+            AVG(total_amount * 0.10) as avg_platform_revenue
           FROM bookings
           WHERE created_at BETWEEN ? AND ?
         `, [startDate, endDate]);
@@ -652,7 +652,7 @@ const adminController = {
       try {
         const [revenueResult] = await pool.execute(`
           SELECT 
-            SUM(total_amount) as total_revenue,
+            SUM(total_amount * 0.10) as total_revenue,
             COUNT(DISTINCT artist_id) as active_artists,
             COUNT(DISTINCT organizer_id) as active_organizers
           FROM bookings
@@ -664,24 +664,41 @@ const adminController = {
         console.log('Revenue analytics failed:', error.message);
       }
 
-      // Popular event types
+      // Popular event types - Fixed to use correct relationship
       let eventTypeAnalytics = [];
       try {
         const [eventTypesResult] = await pool.execute(`
           SELECT 
             e.event_type,
-            COUNT(*) as event_count,
-            COUNT(b.id) as booking_count
+            COUNT(e.id) as event_count,
+            COUNT(b.id) as booking_count,
+            SUM(CASE WHEN b.status = 'completed' THEN b.total_amount ELSE 0 END) as total_revenue
           FROM events e
-          -- No events table in Phase 1
+          LEFT JOIN bookings b ON e.id = b.event_id
           WHERE e.created_at BETWEEN ? AND ?
           GROUP BY e.event_type
           ORDER BY event_count DESC
+          LIMIT 10
         `, [startDate, endDate]);
 
         eventTypeAnalytics = eventTypesResult;
       } catch (error) {
         console.log('Event type analytics failed:', error.message);
+        // Fallback: Get event types from bookings event_name analysis
+        try {
+          const [fallbackResult] = await pool.execute(`
+            SELECT 
+              'General Event' as event_type,
+              COUNT(*) as event_count,
+              COUNT(*) as booking_count,
+              SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END) as total_revenue
+            FROM bookings
+            WHERE created_at BETWEEN ? AND ?
+          `, [startDate, endDate]);
+          eventTypeAnalytics = fallbackResult;
+        } catch (fallbackError) {
+          console.log('Fallback event analytics also failed:', fallbackError.message);
+        }
       }
 
       // Platform performance metrics
@@ -720,19 +737,19 @@ const adminController = {
       const startDate = req.query.startDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
       const endDate = req.query.endDate || new Date();
 
-      // Monthly revenue breakdown
+      // Monthly revenue breakdown - Fixed to use completion_date
       let monthlyRevenue = [];
       try {
         const [monthlyResult] = await pool.execute(`
           SELECT 
-            YEAR(completed_at) as year,
-            MONTH(completed_at) as month,
-            SUM(total_amount) as revenue,
+            YEAR(COALESCE(completion_date, created_at)) as year,
+            MONTH(COALESCE(completion_date, created_at)) as month,
+            SUM(total_amount * 0.10) as revenue,
             COUNT(*) as completed_bookings,
-            AVG(total_amount) as avg_booking_value
+            AVG(total_amount * 0.10) as avg_platform_revenue
           FROM bookings
           WHERE status = 'completed' AND created_at BETWEEN ? AND ?
-          GROUP BY YEAR(completed_at), MONTH(completed_at)
+          GROUP BY YEAR(COALESCE(completion_date, created_at)), MONTH(COALESCE(completion_date, created_at))
           ORDER BY year ASC, month ASC
         `, [startDate, endDate]);
 
@@ -741,7 +758,7 @@ const adminController = {
         console.log('Monthly revenue failed:', error.message);
       }
 
-      // Top earning artists
+      // Top earning artists - Fixed query
       let topArtists = [];
       try {
         const [topArtistsResult] = await pool.execute(`
@@ -751,7 +768,9 @@ const adminController = {
             COUNT(b.id) as total_bookings,
             SUM(b.total_amount) as total_earnings
           FROM users u
-          JOIN artists ar ON u.id = ar.user_id JOIN bookings b ON ar.id = b.artist_id WHERE u.role = 'artist' AND b.status = 'completed' AND b.created_at BETWEEN ? AND ?
+          JOIN artists ar ON u.id = ar.user_id 
+          JOIN bookings b ON ar.id = b.artist_id 
+          WHERE u.role = 'artist' AND b.status = 'completed' AND b.created_at BETWEEN ? AND ?
           GROUP BY u.id, u.name, u.email
           ORDER BY total_earnings DESC
           LIMIT 10
@@ -762,7 +781,7 @@ const adminController = {
         console.log('Top artists failed:', error.message);
       }
 
-      // Top spending organizers
+      // Top spending organizers - Fixed query
       let topOrganizers = [];
       try {
         const [topOrganizersResult] = await pool.execute(`
@@ -772,7 +791,9 @@ const adminController = {
             COUNT(b.id) as total_bookings,
             SUM(b.total_amount) as total_spent
           FROM users u
-          JOIN organizers org ON u.id = org.user_id JOIN bookings b ON org.id = b.organizer_id WHERE u.role = 'organizer' AND b.status = 'completed' AND b.created_at BETWEEN ? AND ?
+          JOIN organizers org ON u.id = org.user_id 
+          JOIN bookings b ON org.id = b.organizer_id 
+          WHERE u.role = 'organizer' AND b.status = 'completed' AND b.created_at BETWEEN ? AND ?
           GROUP BY u.id, u.name, u.email
           ORDER BY total_spent DESC
           LIMIT 10

@@ -108,7 +108,8 @@ const AdminDashboard = () => {
               <h3 className="fw-bold text-info">
                 ${stats?.monthlyRevenue ? stats.monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0'}
               </h3>
-              <p className="text-muted mb-0">Monthly Revenue</p>
+              <p className="text-muted mb-0">Monthly Platform Revenue</p>
+              <small className="text-muted">(10% Commission)</small>
             </Card.Body>
           </Card>
         </Col>
