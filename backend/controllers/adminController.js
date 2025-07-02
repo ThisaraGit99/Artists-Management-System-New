@@ -704,11 +704,11 @@ const adminController = {
       // Platform performance metrics
       const [performanceResult] = await pool.execute(`
         SELECT 
-          (SELECT COUNT(*) FROM users WHERE role = 'artist') as total_artists,
-          (SELECT COUNT(*) FROM users WHERE role = 'organizer') as total_organizers,
-          (SELECT COUNT(*) FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)) as weekly_signups,
-          (SELECT COUNT(*) FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)) as monthly_signups
-      `);
+          (SELECT COUNT(*) FROM users WHERE role = 'artist' AND created_at BETWEEN ? AND ?) as total_artists,
+          (SELECT COUNT(*) FROM users WHERE role = 'organizer' AND created_at BETWEEN ? AND ?) as total_organizers,
+          (SELECT COUNT(*) FROM users WHERE created_at >= DATE_SUB(?, INTERVAL 7 DAY)) as weekly_signups,
+          (SELECT COUNT(*) FROM users WHERE created_at >= DATE_SUB(?, INTERVAL 30 DAY)) as monthly_signups
+      `, [startDate, endDate, startDate, endDate, endDate, endDate]);
 
       res.json({
         success: true,

@@ -224,9 +224,13 @@ const adminService = {
   },
 
   // Analytics (placeholders for future implementation)
-  getAnalyticsOverview: async () => {
+  getAnalyticsOverview: async (startDate, endDate) => {
     try {
-      const response = await apiClient.get('/admin/analytics/overview');
+      const params = new URLSearchParams({
+        startDate,
+        endDate
+      });
+      const response = await apiClient.get(`/admin/analytics/overview?${params}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -235,10 +239,10 @@ const adminService = {
 
   getRevenueAnalytics: async (startDate, endDate) => {
     try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-      
+      const params = new URLSearchParams({
+        startDate,
+        endDate
+      });
       const response = await apiClient.get(`/admin/analytics/revenue?${params}`);
       return response.data;
     } catch (error) {
@@ -246,9 +250,13 @@ const adminService = {
     }
   },
 
-  getUserAnalytics: async () => {
+  getUserAnalytics: async (startDate, endDate) => {
     try {
-      const response = await apiClient.get('/admin/analytics/users');
+      const params = new URLSearchParams({
+        startDate,
+        endDate
+      });
+      const response = await apiClient.get(`/admin/analytics/users?${params}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

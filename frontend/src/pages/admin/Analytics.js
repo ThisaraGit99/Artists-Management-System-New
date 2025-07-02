@@ -9,7 +9,6 @@ const Analytics = () => {
   const [error, setError] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [revenueData, setRevenueData] = useState(null);
-  const [userAnalytics, setUserAnalytics] = useState(null);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
@@ -22,24 +21,25 @@ const Analytics = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch all analytics data in parallel
-      const [overviewResponse, revenueResponse, userResponse] = await Promise.all([
-        adminService.getAnalyticsOverview(),
-        adminService.getRevenueAnalytics(dateRange.startDate, dateRange.endDate),
-        adminService.getUserAnalytics()
+      // Fetch analytics data in parallel with date range parameters
+      const [overviewResponse, revenueResponse] = await Promise.all([
+        adminService.getAnalyticsOverview(dateRange.startDate, dateRange.endDate),
+        adminService.getRevenueAnalytics(dateRange.startDate, dateRange.endDate)
       ]);
 
+      // Update all sections with the new data
       if (overviewResponse.success) {
         setAnalyticsData(overviewResponse.data);
+      } else {
+        throw new Error(overviewResponse.message || 'Failed to load overview data');
       }
       
       if (revenueResponse.success) {
         setRevenueData(revenueResponse.data);
-      }
-      
-      if (userResponse.success) {
-        setUserAnalytics(userResponse.data);
+      } else {
+        throw new Error(revenueResponse.message || 'Failed to load revenue data');
       }
 
     } catch (error) {
@@ -391,105 +391,94 @@ const Analytics = () => {
         </Row>
       )}
 
-      {/* User Analytics */}
-      {userAnalytics && (
+      {/* Daily Registration Trends */}
+      {analyticsData && analyticsData.userGrowth && (
         <Row className="mb-4">
-          <Col lg={6}>
-            <Card className="h-100">
+          <Col>
+            <Card>
               <Card.Header className="bg-white">
                 <h5 className="mb-0">
-                  <i className="fas fa-user-plus me-2"></i>
-                  User Registration Trends
+                  <i className="fas fa-chart-area me-2"></i>
+                  Daily Registration Trends
                 </h5>
               </Card.Header>
               <Card.Body>
-                <div className="row text-center">
-                  <div className="col-4">
-                    <div className="display-6 fw-bold text-primary">
-                      {userAnalytics.activityMetrics.active_artists_week || 0}
-                    </div>
-                    <small className="text-muted">Active Artists (Last 7 Days)</small>
-                  </div>
-                  <div className="col-4">
-                    <div className="display-6 fw-bold text-info">
-                      {userAnalytics.activityMetrics.active_organizers_week || 0}
-                    </div>
-                    <small className="text-muted">Active Organizers (Last 7 Days)</small>
-                  </div>
-                  <div className="col-4">
-                    <div className="display-6 fw-bold text-success">
-                      {(userAnalytics.activityMetrics.active_artists_month || 0) + 
-                       (userAnalytics.activityMetrics.active_organizers_month || 0)}
-                    </div>
-                    <small className="text-muted">Total Active (Last 30 Days)</small>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col lg={6}>
-            <Card className="h-100">
-              <Card.Header className="bg-white">
-                <h5 className="mb-0">
-                  <i className="fas fa-users-cog me-2"></i>
-                  User Engagement Stats
-                </h5>
-              </Card.Header>
-              <Card.Body>
-                {userAnalytics.engagementStats.map((stat, index) => (
-                  <div key={index} className="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                      <span className="fw-bold text-capitalize">{stat.role}s</span>
-                      <br />
-                      <small className="text-muted">Total: {stat.total_users}</small>
-                    </div>
-                    <div className="text-end">
-                      <div className="fw-bold text-success">+{stat.new_users_week}</div>
-                      <small className="text-muted">Last 7 days</small>
-                      <br />
-                      <div className="fw-bold text-info">+{stat.new_users_month}</div>
-                      <small className="text-muted">Last 30 days</small>
-                    </div>
-                  </div>
-                ))}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
-
-      {/* Registration Trend Chart Placeholder */}
-      <Row>
-        <Col>
-          <Card>
-            <Card.Header className="bg-white">
-              <h5 className="mb-0">
-                <i className="fas fa-chart-area me-2"></i>
-                Daily Registration Trends (Last 30 Days)
-              </h5>
-            </Card.Header>
-            <Card.Body>
-              {userAnalytics && userAnalytics.registrationTrend.length > 0 ? (
+                {analyticsData.userGrowth.length > 0 ? (
                 <div className="table-responsive">
-                  <table className="table table-sm">
+                    <table className="table table-sm table-hover">
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Total Registrations</th>
-                        <th>Artists</th>
-                        <th>Organizers</th>
+                          <th className="text-center">New Artists</th>
+                          <th className="text-center">New Organizers</th>
+                          <th className="text-center">Total Registrations</th>
+                          <th className="text-end">Growth Rate</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {userAnalytics.registrationTrend.slice(-7).map((day, index) => (
-                        <tr key={index}>
+                        {analyticsData.userGrowth.map((day, index) => {
+                          const totalRegistrations = day.new_artists + day.new_organizers;
+                          const previousDay = index > 0 ? analyticsData.userGrowth[index - 1] : null;
+                          const previousTotal = previousDay ? previousDay.new_artists + previousDay.new_organizers : totalRegistrations;
+                          const growthRate = previousTotal === 0 ? 100 : ((totalRegistrations - previousTotal) / previousTotal) * 100;
+                          
+                          return (
+                            <tr key={day.date}>
                           <td>{new Date(day.date).toLocaleDateString()}</td>
-                          <td className="fw-bold">{day.total_registrations}</td>
-                          <td className="text-success">{day.artist_registrations}</td>
-                          <td className="text-info">{day.organizer_registrations}</td>
+                              <td className="text-center">
+                                <span className="text-success">
+                                  {day.new_artists > 0 && '+'}{day.new_artists}
+                                </span>
+                              </td>
+                              <td className="text-center">
+                                <span className="text-info">
+                                  {day.new_organizers > 0 && '+'}{day.new_organizers}
+                                </span>
+                              </td>
+                              <td className="text-center fw-bold">
+                                {totalRegistrations}
+                              </td>
+                              <td className="text-end">
+                                <span className={growthRate >= 0 ? 'text-success' : 'text-danger'}>
+                                  {growthRate > 0 && '+'}{growthRate.toFixed(1)}%
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="table-light">
+                        <tr>
+                          <td className="fw-bold">Period Total</td>
+                          <td className="text-center fw-bold text-success">
+                            +{analyticsData.userGrowth.reduce((sum, day) => sum + (parseInt(day.new_artists) || 0), 0)}
+                          </td>
+                          <td className="text-center fw-bold text-info">
+                            +{analyticsData.userGrowth.reduce((sum, day) => sum + (parseInt(day.new_organizers) || 0), 0)}
+                          </td>
+                          <td className="text-center fw-bold">
+                            {analyticsData.userGrowth.reduce((sum, day) => {
+                              const artists = parseInt(day.new_artists) || 0;
+                              const organizers = parseInt(day.new_organizers) || 0;
+                              return sum + artists + organizers;
+                            }, 0)}
+                          </td>
+                          <td className="text-end fw-bold">
+                            {(() => {
+                              const firstDay = analyticsData.userGrowth[0];
+                              const lastDay = analyticsData.userGrowth[analyticsData.userGrowth.length - 1];
+                              if (!firstDay || !lastDay) return '-';
+                              
+                              const firstTotal = (parseInt(firstDay.new_artists) || 0) + (parseInt(firstDay.new_organizers) || 0);
+                              const lastTotal = (parseInt(lastDay.new_artists) || 0) + (parseInt(lastDay.new_organizers) || 0);
+                              const totalGrowth = firstTotal === 0 ? 0 : ((lastTotal - firstTotal) / firstTotal) * 100;
+                              
+                              return totalGrowth === 0 ? '-' : 
+                                     `${totalGrowth > 0 ? '+' : ''}${totalGrowth.toFixed(1)}%`;
+                            })()}
+                          </td>
                         </tr>
-                      ))}
-                    </tbody>
+                      </tfoot>
                   </table>
                 </div>
               ) : (
@@ -502,6 +491,7 @@ const Analytics = () => {
           </Card>
         </Col>
       </Row>
+      )}
     </Container>
   );
 };
